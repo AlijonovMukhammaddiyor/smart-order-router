@@ -4,38 +4,7 @@ This repository contains routing logic for the Uniswap V3 protocol.
 
 It searches for the most efficient way to swap token A for token B, considering splitting swaps across multiple routes and gas costs.
 
-## Testing
-
-### Unit Tests
-
-First make sure you have run `npm install` and `npm run build`.
-
-```
-npm run test
-```
-
-### Integration Tests
-
-Make sure the `.env` file is configured to connect to mainnet and other chains. See the [CLI](#cli) section below for more details.
-
-```
-npm run integ-test
-```
-
-### Tenderly Simulations
-
-Quotes can be simulated on Tenderly
-
-Ensure you set the following environment variables:
-
-```
-process.env.TENDERLY_BASE_URL!,
-process.env.TENDERLY_USER!,
-process.env.TENDERLY_PROJECT!,
-process.env.TENDERLY_ACCESS_KEY!,
-```
-
-### CLI
+## CLI
 
 The package can be run as a CLI for testing purposes.
 
@@ -47,20 +16,7 @@ JSON_RPC_PROVIDER = '<JSON_RPC_PROVIDER>'
 
 To run on chains other than mainnet set up a connection by specifying the environment variable
 
-```
-JSON_RPC_PROVIDER_GORLI = '<JSON_RPC_PROVIDER>'
-JSON_RPC_PROVIDER_OPTIMISM = '<JSON_RPC_PROVIDER>'
-JSON_RPC_PROVIDER_OPTIMISM_GOERLI = '<JSON_RPC_PROVIDER>'
-JSON_RPC_PROVIDER_ARBITRUM_ONE = '<JSON_RPC_PROVIDER>'
-JSON_RPC_PROVIDER_ARBITRUM_GOERLI = '<JSON_RPC_PROVIDER>'
-JSON_RPC_PROVIDER_POLYGON = '<JSON_RPC_PROVIDER>'
-JSON_RPC_PROVIDER_POLYGON_MUMBAI = '<JSON_RPC_PROVIDER>'
-JSON_RPC_PROVIDER_CELO = '<JSON_RPC_PROVIDER>'
-JSON_RPC_PROVIDER_CELO_ALFAJORES = '<JSON_RPC_PROVIDER>'
-JSON_RPC_PROVIDER_BNB = '<JSON_RPC_PROVIDER>'
-JSON_RPC_PROVIDER_AVALANCHE = '<JSON_RPC_PROVIDER>'
-JSON_RPC_PROVIDER_BASE = '<JSON_RPC_PROVIDER>'
-```
+JSON_RPC_PROVIDER_CHILIZ = '<JSON_RPC_PROVIDER>'
 
 Then from the root directory you can execute the CLI.
 
@@ -162,7 +118,6 @@ Total ticks crossed: 7
 ./bin/cli quote --tokenIn 0x7F5c764cBc14f9669B88837ca1490cCa17c31607 --tokenOut 0x4200000000000000000000000000000000000042 --amount 1 --exactIn --minSplits 1 --protocols v2 --router alpha --chainId 10
 ```
 
-
 ## Optimism-Goerli
 
 ```
@@ -228,7 +183,6 @@ Total ticks crossed: 7
 ```
 ./bin/cli quote --tokenIn 0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA --tokenOut 0x4200000000000000000000000000000000000006 --amount 10 --exactIn --minSplits 1 --protocols v3 --router alpha --chainId 8453
 ```
-
 
 ## Adding a new Chain
 
