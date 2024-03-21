@@ -11,7 +11,7 @@ import {
   USDC_OPTIMISM_SEPOLIA,
   USDT_OPTIMISM_SEPOLIA,
   V2SubgraphPool,
-  WBTC_OPTIMISM_SEPOLIA
+  WBTC_OPTIMISM_SEPOLIA,
 } from '../../../providers';
 import {
   CELO,
@@ -72,7 +72,11 @@ import {
   IV3SubgraphProvider,
   V3SubgraphPool,
 } from '../../../providers/v3/subgraph-provider';
-import { unparseFeeAmount, WRAPPED_NATIVE_CURRENCY } from '../../../util';
+import {
+  ChainIdWithChiliz,
+  unparseFeeAmount,
+  WRAPPED_NATIVE_CURRENCY,
+} from '../../../util';
 import { parseFeeAmount } from '../../../util/amounts';
 import { log } from '../../../util/log';
 import { metric, MetricLoggerUnit } from '../../../util/metric';
@@ -106,7 +110,7 @@ export type V3GetCandidatePoolsParams = {
   tokenProvider: ITokenProvider;
   poolProvider: IV3PoolProvider;
   blockedTokenListProvider?: ITokenListProvider;
-  chainId: ChainId;
+  chainId: ChainIdWithChiliz;
 };
 
 export type V2GetCandidatePoolsParams = {
@@ -118,7 +122,8 @@ export type V2GetCandidatePoolsParams = {
   tokenProvider: ITokenProvider;
   poolProvider: IV2PoolProvider;
   blockedTokenListProvider?: ITokenListProvider;
-  chainId: ChainId;
+  chainId: ChainIdWithChiliz;
+  chilizPools: V2SubgraphPool[];
 };
 
 export type MixedRouteGetCandidatePoolsParams = {
@@ -129,10 +134,11 @@ export type MixedRouteGetCandidatePoolsParams = {
   v2poolProvider: IV2PoolProvider;
   v3poolProvider: IV3PoolProvider;
   blockedTokenListProvider?: ITokenListProvider;
-  chainId: ChainId;
+  chainId: ChainIdWithChiliz;
+  chilizPools: V2SubgraphPool[];
 };
 
-const baseTokensByChain: { [chainId in ChainId]?: Token[] } = {
+const baseTokensByChain: { [chainId in ChainIdWithChiliz]?: Token[] } = {
   [ChainId.MAINNET]: [
     USDC_MAINNET,
     USDT_MAINNET,
@@ -643,6 +649,7 @@ export async function getV2CandidatePools({
   poolProvider,
   blockedTokenListProvider,
   chainId,
+  chilizPools,
 }: V2GetCandidatePoolsParams): Promise<V2CandidatePools> {
   const {
     blockNumber,
@@ -684,7 +691,6 @@ export async function getV2CandidatePools({
   const subgraphPoolsSorted = allPoolsRaw.sort((a, b) => b.reserve - a.reserve);
 
   const poolAddressesSoFar = new Set<string>();
-
   // Always add the direct swap pool into the mix regardless of if it exists in the subgraph pool list.
   // Ensures that new pools can be swapped on immediately, and that if a pool was filtered out of the
   // subgraph query for some reason (e.g. trackedReserveETH was 0), then we still consider it.
@@ -692,7 +698,8 @@ export async function getV2CandidatePools({
   if (topNDirectSwaps > 0) {
     const { token0, token1, poolAddress } = poolProvider.getPoolAddress(
       tokenIn,
-      tokenOut
+      tokenOut,
+      chilizPools
     );
 
     poolAddressesSoFar.add(poolAddress.toLowerCase());
@@ -1206,7 +1213,11 @@ export async function getV2CandidatePools({
 
   // this should be the only place to enable fee-on-transfer fee fetching,
   // because this places loads pools (pairs of tokens with fot taxes) from the subgraph
-  const poolAccessor = await poolProvider.getPools(tokenPairs, routingConfig);
+  const poolAccessor = await poolProvider.getPools(
+    tokenPairs,
+    chilizPools,
+    routingConfig
+  );
 
   metric.putMetric(
     'V2PoolsLoad',
@@ -1246,6 +1257,7 @@ export async function getMixedRouteCandidatePools({
   tokenProvider,
   v3poolProvider,
   v2poolProvider,
+  chilizPools,
 }: MixedRouteGetCandidatePoolsParams): Promise<MixedCandidatePools> {
   const beforeSubgraphPools = Date.now();
   const [
@@ -1410,7 +1422,7 @@ export async function getMixedRouteCandidatePools({
   const beforePoolsLoad = Date.now();
 
   const [V2poolAccessor, V3poolAccessor] = await Promise.all([
-    v2poolProvider.getPools(V2tokenPairs, routingConfig),
+    v2poolProvider.getPools(V2tokenPairs, chilizPools, routingConfig),
     v3poolProvider.getPools(V3tokenPairs, routingConfig),
   ]);
 

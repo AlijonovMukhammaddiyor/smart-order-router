@@ -6,8 +6,13 @@ import {
   Token,
 } from '@uniswap/sdk-core';
 
+import { ChainIdWithChiliz } from './addresses';
+
+enum ExtendedChainId {
+  CHILIZ = 88888,
+}
 // WIP: Gnosis, Moonbeam
-export const SUPPORTED_CHAINS: ChainId[] = [
+export const SUPPORTED_CHAINS: ChainIdWithChiliz[] = [
   ChainId.MAINNET,
   ChainId.OPTIMISM,
   ChainId.OPTIMISM_GOERLI,
@@ -24,6 +29,7 @@ export const SUPPORTED_CHAINS: ChainId[] = [
   ChainId.AVALANCHE,
   ChainId.BASE,
   ChainId.BLAST,
+  ExtendedChainId.CHILIZ,
   // Gnosis and Moonbeam don't yet have contracts deployed yet
 ];
 
@@ -36,6 +42,7 @@ export const V2_SUPPORTED = [
   ChainId.BASE,
   ChainId.BNB,
   ChainId.AVALANCHE,
+  ExtendedChainId.CHILIZ,
 ];
 
 export const HAS_L1_FEE = [
@@ -48,6 +55,7 @@ export const HAS_L1_FEE = [
   ChainId.BASE,
   ChainId.BASE_GOERLI,
   ChainId.BLAST,
+  ExtendedChainId.CHILIZ,
 ];
 
 export const NETWORKS_WITH_SAME_UNISWAP_ADDRESSES = [
@@ -59,7 +67,7 @@ export const NETWORKS_WITH_SAME_UNISWAP_ADDRESSES = [
   ChainId.POLYGON_MUMBAI,
 ];
 
-export const ID_TO_CHAIN_ID = (id: number): ChainId => {
+export const ID_TO_CHAIN_ID = (id: number): ChainIdWithChiliz => {
   switch (id) {
     case 1:
       return ChainId.MAINNET;
@@ -101,6 +109,8 @@ export const ID_TO_CHAIN_ID = (id: number): ChainId => {
       return ChainId.BASE_GOERLI;
     case 81457:
       return ChainId.BLAST;
+    case 88888:
+      return ExtendedChainId.CHILIZ;
     default:
       throw new Error(`Unknown chain id: ${id}`);
   }
@@ -127,6 +137,7 @@ export enum ChainName {
   BASE = 'base-mainnet',
   BASE_GOERLI = 'base-goerli',
   BLAST = 'blast-mainnet',
+  CHILIZ = 'chiliz-mainnet',
 }
 
 export enum NativeCurrencyName {
@@ -138,6 +149,7 @@ export enum NativeCurrencyName {
   MOONBEAM = 'GLMR',
   BNB = 'BNB',
   AVALANCHE = 'AVAX',
+  CHILIZ = 'CHZ',
 }
 
 export const NATIVE_NAMES_BY_ID: { [chainId: number]: string[] } = {
@@ -211,6 +223,11 @@ export const NATIVE_NAMES_BY_ID: { [chainId: number]: string[] } = {
     'ETHER',
     '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
   ],
+  [ExtendedChainId.CHILIZ]: [
+    'CHZ',
+    'CHILIZ',
+    '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+  ],
 };
 
 export const NATIVE_CURRENCY: { [chainId: number]: NativeCurrencyName } = {
@@ -233,6 +250,7 @@ export const NATIVE_CURRENCY: { [chainId: number]: NativeCurrencyName } = {
   [ChainId.AVALANCHE]: NativeCurrencyName.AVALANCHE,
   [ChainId.BASE]: NativeCurrencyName.ETHER,
   [ChainId.BLAST]: NativeCurrencyName.ETHER,
+  [ExtendedChainId.CHILIZ]: NativeCurrencyName.CHILIZ,
 };
 
 export const ID_TO_NETWORK_NAME = (id: number): ChainName => {
@@ -277,6 +295,8 @@ export const ID_TO_NETWORK_NAME = (id: number): ChainName => {
       return ChainName.BASE_GOERLI;
     case 81457:
       return ChainName.BLAST;
+    case 88888:
+      return ChainName.CHILIZ;
     default:
       throw new Error(`Unknown chain id: ${id}`);
   }
@@ -286,7 +306,7 @@ export const CHAIN_IDS_LIST = Object.values(ChainId).map((c) =>
   c.toString()
 ) as string[];
 
-export const ID_TO_PROVIDER = (id: ChainId): string => {
+export const ID_TO_PROVIDER = (id: ChainIdWithChiliz): string => {
   switch (id) {
     case ChainId.MAINNET:
       return process.env.JSON_RPC_PROVIDER!;
@@ -322,12 +342,16 @@ export const ID_TO_PROVIDER = (id: ChainId): string => {
       return process.env.JSON_RPC_PROVIDER_BASE!;
     case ChainId.BLAST:
       return process.env.JSON_RPC_PROVIDER_BLAST!;
+    case ExtendedChainId.CHILIZ:
+      return process.env.JSON_RPC_PROVIDER_CHILIZ!;
     default:
       throw new Error(`Chain id: ${id} not supported`);
   }
 };
 
-export const WRAPPED_NATIVE_CURRENCY: { [chainId in ChainId]: Token } = {
+export const WRAPPED_NATIVE_CURRENCY: {
+  [chainId in ChainIdWithChiliz]: Token;
+} = {
   [ChainId.MAINNET]: new Token(
     1,
     '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
@@ -490,6 +514,13 @@ export const WRAPPED_NATIVE_CURRENCY: { [chainId in ChainId]: Token } = {
     18,
     'WETH',
     'Wrapped Ether'
+  ),
+  [ExtendedChainId.CHILIZ]: new Token(
+    ExtendedChainId.CHILIZ,
+    '0x677F7e16C7Dd57be1D4C8aD1244883214953DC47',
+    18,
+    'WCHZ',
+    'Wrapped CHZ'
   ),
 };
 

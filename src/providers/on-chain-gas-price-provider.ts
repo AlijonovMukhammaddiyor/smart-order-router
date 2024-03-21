@@ -1,5 +1,6 @@
 import { ChainId } from '@uniswap/sdk-core';
 
+import { ChainIdWithChiliz } from '../util';
 import { EIP1559GasPriceProvider } from './eip-1559-gas-price-provider';
 import { GasPrice, IGasPriceProvider } from './gas-price-provider';
 import { LegacyGasPriceProvider } from './legacy-gas-price-provider';
@@ -19,10 +20,10 @@ const DEFAULT_EIP_1559_SUPPORTED_CHAINS = [
  */
 export class OnChainGasPriceProvider extends IGasPriceProvider {
   constructor(
-    protected chainId: ChainId,
+    protected chainId: ChainIdWithChiliz,
     protected eip1559GasPriceProvider: EIP1559GasPriceProvider,
     protected legacyGasPriceProvider: LegacyGasPriceProvider,
-    protected eipChains: ChainId[] = DEFAULT_EIP_1559_SUPPORTED_CHAINS
+    protected eipChains: ChainIdWithChiliz[] = DEFAULT_EIP_1559_SUPPORTED_CHAINS
   ) {
     super();
   }

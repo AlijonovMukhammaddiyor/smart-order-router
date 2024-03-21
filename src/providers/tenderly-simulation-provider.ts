@@ -17,12 +17,13 @@ import {
   MetricLoggerUnit,
   SwapOptions,
   SwapRoute,
-  SwapType
+  SwapType,
 } from '../routers';
 import { Erc20__factory } from '../types/other/factories/Erc20__factory';
 import { Permit2__factory } from '../types/other/factories/Permit2__factory';
 import {
   BEACON_CHAIN_DEPOSIT_ADDRESS,
+  ChainIdWithChiliz,
   log,
   MAX_UINT160,
   SWAP_ROUTER_02_ADDRESSES,
@@ -41,6 +42,7 @@ import {
   Simulator,
 } from './simulation-provider';
 import { IV2PoolProvider } from './v2/pool-provider';
+import { V2SubgraphPool } from './v2/subgraph-provider';
 import { IV3PoolProvider } from './v3/pool-provider';
 
 export type TenderlyResponseUniversalRouter = {
@@ -68,7 +70,7 @@ enum TenderlySimulationType {
 }
 
 type TenderlySimulationRequest = {
-  network_id: ChainId;
+  network_id: ChainIdWithChiliz;
   estimate_gas: boolean;
   input: string;
   to: string;
@@ -98,7 +100,7 @@ export class FallbackTenderlySimulator extends Simulator {
   private tenderlySimulator: TenderlySimulator;
   private ethEstimateGasSimulator: EthEstimateGasSimulator;
   constructor(
-    chainId: ChainId,
+    chainId: ChainIdWithChiliz,
     provider: JsonRpcProvider,
     portionProvider: IPortionProvider,
     tenderlySimulator: TenderlySimulator,
@@ -113,6 +115,7 @@ export class FallbackTenderlySimulator extends Simulator {
     fromAddress: string,
     swapOptions: SwapOptions,
     swapRoute: SwapRoute,
+    chilizPools: V2SubgraphPool[],
     providerConfig?: GasModelProviderConfig
   ): Promise<SwapRoute> {
     // Make call to eth estimate gas if possible
@@ -134,7 +137,13 @@ export class FallbackTenderlySimulator extends Simulator {
 
       try {
         const swapRouteWithGasEstimate =
-          await this.ethEstimateGasSimulator.ethEstimateGas(fromAddress, swapOptions, swapRoute, providerConfig);
+          await this.ethEstimateGasSimulator.ethEstimateGas(
+            fromAddress,
+            swapOptions,
+            swapRoute,
+            chilizPools,
+            providerConfig
+          );
         return swapRouteWithGasEstimate;
       } catch (err) {
         log.info({ err: err }, 'Error simulating using eth_estimateGas');
@@ -143,7 +152,13 @@ export class FallbackTenderlySimulator extends Simulator {
     }
 
     try {
-      return await this.tenderlySimulator.simulateTransaction(fromAddress, swapOptions, swapRoute, providerConfig);
+      return await this.tenderlySimulator.simulateTransaction(
+        fromAddress,
+        swapOptions,
+        swapRoute,
+        chilizPools,
+        providerConfig
+      );
     } catch (err) {
       log.error({ err: err }, 'Failed to simulate via Tenderly');
 
@@ -166,7 +181,9 @@ export class TenderlySimulator extends Simulator {
   private tenderlyAccessKey: string;
   private v2PoolProvider: IV2PoolProvider;
   private v3PoolProvider: IV3PoolProvider;
-  private overrideEstimateMultiplier: { [chainId in ChainId]?: number };
+  private overrideEstimateMultiplier: {
+    [chainId in ChainIdWithChiliz]?: number;
+  };
   private tenderlyRequestTimeout?: number;
   private tenderlyServiceInstance = axios.create({
     // keep connections alive,
@@ -176,7 +193,7 @@ export class TenderlySimulator extends Simulator {
   });
 
   constructor(
-    chainId: ChainId,
+    chainId: ChainIdWithChiliz,
     tenderlyBaseUrl: string,
     tenderlyUser: string,
     tenderlyProject: string,
@@ -203,12 +220,13 @@ export class TenderlySimulator extends Simulator {
     fromAddress: string,
     swapOptions: SwapOptions,
     swapRoute: SwapRoute,
+    chilizPools: V2SubgraphPool[],
     providerConfig?: GasModelProviderConfig
   ): Promise<SwapRoute> {
     const currencyIn = swapRoute.trade.inputAmount.currency;
     const tokenIn = currencyIn.wrapped;
     const chainId = this.chainId;
-    if ([ChainId.CELO, ChainId.CELO_ALFAJORES].includes(chainId)) {
+    if ([ChainId.CELO, ChainId.CELO_ALFAJORES].includes(chainId as ChainId)) {
       const msg = 'Celo not supported by Tenderly!';
       log.info(msg);
       return { ...swapRoute, simulationStatus: SimulationStatus.NotSupported };
@@ -509,7 +527,16 @@ export class TenderlySimulator extends Simulator {
       estimatedGasUsedQuoteToken,
       estimatedGasUsedGasToken,
       quoteGasAdjusted,
-    } = await calculateGasUsed(chainId, swapRoute, estimatedGasUsed, this.v2PoolProvider, this.v3PoolProvider, this.provider, providerConfig);
+    } = await calculateGasUsed(
+      chainId,
+      swapRoute,
+      estimatedGasUsed,
+      this.v2PoolProvider,
+      this.v3PoolProvider,
+      this.provider,
+      chilizPools,
+      providerConfig
+    );
     return {
       ...initSwapRouteFromExisting(
         swapRoute,

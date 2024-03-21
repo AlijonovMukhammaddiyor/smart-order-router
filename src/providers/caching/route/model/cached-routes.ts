@@ -1,5 +1,5 @@
 import { Protocol } from '@uniswap/router-sdk';
-import { ChainId, Token, TradeType } from '@uniswap/sdk-core';
+import { Token, TradeType } from '@uniswap/sdk-core';
 import _ from 'lodash';
 
 import {
@@ -8,12 +8,13 @@ import {
   V2Route,
   V3Route,
 } from '../../../../routers';
+import { ChainIdWithChiliz } from '../../../../util';
 
 import { CachedRoute } from './cached-route';
 
 interface CachedRoutesParams {
   routes: CachedRoute<V3Route | V2Route | MixedRoute>[];
-  chainId: ChainId;
+  chainId: ChainIdWithChiliz;
   tokenIn: Token;
   tokenOut: Token;
   protocolsCovered: Protocol[];
@@ -31,7 +32,7 @@ interface CachedRoutesParams {
  */
 export class CachedRoutes {
   public readonly routes: CachedRoute<V3Route | V2Route | MixedRoute>[];
-  public readonly chainId: ChainId;
+  public readonly chainId: ChainIdWithChiliz;
   public readonly tokenIn: Token;
   public readonly tokenOut: Token;
   public readonly protocolsCovered: Protocol[];
@@ -90,7 +91,7 @@ export class CachedRoutes {
    */
   public static fromRoutesWithValidQuotes(
     routes: RouteWithValidQuote[],
-    chainId: ChainId,
+    chainId: ChainIdWithChiliz,
     tokenIn: Token,
     tokenOut: Token,
     protocolsCovered: Protocol[],

@@ -1,5 +1,5 @@
 import { Protocol } from '@uniswap/router-sdk';
-import { ChainId, Currency, Token, TradeType } from '@uniswap/sdk-core';
+import { Currency, Token, TradeType } from '@uniswap/sdk-core';
 import _ from 'lodash';
 
 import {
@@ -10,8 +10,10 @@ import {
   IV3PoolProvider,
   IV3SubgraphProvider,
   TokenValidationResult,
+  V2SubgraphPool,
 } from '../../../providers';
 import {
+  ChainIdWithChiliz,
   CurrencyAmount,
   log,
   metric,
@@ -42,7 +44,7 @@ export class V3Quoter extends BaseQuoter<V3CandidatePools, V3Route> {
     v3PoolProvider: IV3PoolProvider,
     onChainQuoteProvider: IOnChainQuoteProvider,
     tokenProvider: ITokenProvider,
-    chainId: ChainId,
+    chainId: ChainIdWithChiliz,
     blockedTokenListProvider?: ITokenListProvider,
     tokenValidatorProvider?: ITokenValidatorProvider
   ) {
@@ -63,12 +65,14 @@ export class V3Quoter extends BaseQuoter<V3CandidatePools, V3Route> {
     tokenOut: Token,
     v3CandidatePools: V3CandidatePools,
     _tradeType: TradeType,
+    chilizPools: V2SubgraphPool[],
     routingConfig: AlphaRouterConfig
   ): Promise<GetRoutesResult<V3Route>> {
     const beforeGetRoutes = Date.now();
     // Fetch all the pools that we will consider routing via. There are thousands
     // of pools, so we filter them to a set of candidate pools that we expect will
     // result in good prices.
+    console.log(chilizPools?.length);
     const { poolAccessor, candidatePools } = v3CandidatePools;
     const poolsRaw = poolAccessor.getAllPools();
 
@@ -130,13 +134,13 @@ export class V3Quoter extends BaseQuoter<V3CandidatePools, V3Route> {
     percents: number[],
     quoteToken: Token,
     tradeType: TradeType,
+    chilizPools: V2SubgraphPool[],
     routingConfig: AlphaRouterConfig,
     candidatePools?: CandidatePoolsBySelectionCriteria,
     gasModel?: IGasModel<V3RouteWithValidQuote>
   ): Promise<GetQuotesResult> {
     const beforeGetQuotes = Date.now();
-    log.info('Starting to get V3 quotes');
-
+    console.log(chilizPools?.length);
     if (gasModel === undefined) {
       throw new Error(
         'GasModel for V3RouteWithValidQuote is required to getQuotes'

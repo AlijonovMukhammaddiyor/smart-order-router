@@ -1,7 +1,12 @@
 import { ChainId, Token } from '@uniswap/sdk-core';
 import _ from 'lodash';
 
-import { log, WRAPPED_NATIVE_CURRENCY } from '../util';
+import {
+  ChainIdWithChiliz,
+  ExtendedChainId,
+  log,
+  WRAPPED_NATIVE_CURRENCY,
+} from '../util';
 
 import { ICache } from './cache';
 import {
@@ -48,6 +53,8 @@ import {
   USDT_OPTIMISM,
   USDT_OPTIMISM_GOERLI,
   USDT_OPTIMISM_SEPOLIA,
+  WACM_CHILIZ,
+  WBAR_CHILIZ,
   WBTC_ARBITRUM,
   WBTC_MAINNET,
   WBTC_MOONBEAM,
@@ -55,12 +62,13 @@ import {
   WBTC_OPTIMISM_GOERLI,
   WBTC_OPTIMISM_SEPOLIA,
   WMATIC_POLYGON,
-  WMATIC_POLYGON_MUMBAI
+  WMATIC_POLYGON_MUMBAI,
+  WOG_CHILIZ,
 } from './token-provider';
 
 // These tokens will added to the Token cache on initialization.
 export const CACHE_SEED_TOKENS: {
-  [chainId in ChainId]?: { [symbol: string]: Token };
+  [chainId in ChainIdWithChiliz]?: { [symbol: string]: Token };
 } = {
   [ChainId.MAINNET]: {
     WETH: WRAPPED_NATIVE_CURRENCY[ChainId.MAINNET]!,
@@ -165,6 +173,12 @@ export const CACHE_SEED_TOKENS: {
     USDB: USDB_BLAST,
     WETH: WRAPPED_NATIVE_CURRENCY[ChainId.BLAST],
   },
+  [ExtendedChainId.CHILIZ]: {
+    WBAR: WBAR_CHILIZ,
+    WACM: WACM_CHILIZ,
+    WOG: WOG_CHILIZ,
+    WCHZ: WRAPPED_NATIVE_CURRENCY[88888],
+  },
   // Currently we do not have providers for Moonbeam mainnet or Gnosis testnet
 };
 
@@ -176,11 +190,11 @@ export const CACHE_SEED_TOKENS: {
  * @class CachingTokenProviderWithFallback
  */
 export class CachingTokenProviderWithFallback implements ITokenProvider {
-  private CACHE_KEY = (chainId: ChainId, address: string) =>
+  private CACHE_KEY = (chainId: ChainIdWithChiliz, address: string) =>
     `token-${chainId}-${address}`;
 
   constructor(
-    protected chainId: ChainId,
+    protected chainId: ChainIdWithChiliz,
     // Token metadata (e.g. symbol and decimals) don't change so can be cached indefinitely.
     // Constructing a new token object is slow as sdk-core does checksumming.
     private tokenCache: ICache<Token>,

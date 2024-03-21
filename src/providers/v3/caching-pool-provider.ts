@@ -1,8 +1,8 @@
-import { ChainId, Token } from '@uniswap/sdk-core';
+import { Token } from '@uniswap/sdk-core';
 import { FeeAmount, Pool } from '@uniswap/v3-sdk';
 import _ from 'lodash';
 
-import { metric, MetricLoggerUnit } from '../../util';
+import { ChainIdWithChiliz, metric, MetricLoggerUnit } from '../../util';
 import { log } from '../../util/log';
 
 import { ICache } from './../cache';
@@ -19,7 +19,7 @@ import { IV3PoolProvider, V3PoolAccessor } from './pool-provider';
  */
 export class CachingV3PoolProvider implements IV3PoolProvider {
   private POOL_KEY = (
-    chainId: ChainId,
+    chainId: ChainIdWithChiliz,
     address: string,
     blockNumber?: number
   ) =>
@@ -34,7 +34,7 @@ export class CachingV3PoolProvider implements IV3PoolProvider {
    * @param cache Cache instance to hold cached pools.
    */
   constructor(
-    protected chainId: ChainId,
+    protected chainId: ChainIdWithChiliz,
     protected poolProvider: IV3PoolProvider,
     private cache: ICache<Pool>
   ) {}

@@ -1,13 +1,13 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { Protocol } from '@uniswap/router-sdk';
-import { ChainId, TradeType } from '@uniswap/sdk-core';
+import { TradeType } from '@uniswap/sdk-core';
 import JSBI from 'jsbi';
 import _ from 'lodash';
 import FixedReverseHeap from 'mnemonist/fixed-reverse-heap';
 import Queue from 'mnemonist/queue';
 
 import { IPortionProvider } from '../../../providers/portion-provider';
-import { HAS_L1_FEE, V2_SUPPORTED } from '../../../util';
+import { ChainIdWithChiliz, HAS_L1_FEE, V2_SUPPORTED } from '../../../util';
 import { CurrencyAmount } from '../../../util/amounts';
 import { log } from '../../../util/log';
 import { metric, MetricLoggerUnit } from '../../../util/metric';
@@ -37,7 +37,7 @@ export async function getBestSwapRoute(
   percents: number[],
   routesWithValidQuotes: RouteWithValidQuote[],
   routeType: TradeType,
-  chainId: ChainId,
+  chainId: ChainIdWithChiliz,
   routingConfig: AlphaRouterConfig,
   portionProvider: IPortionProvider,
   v2GasModel?: IGasModel<V2RouteWithValidQuote>,
@@ -150,7 +150,7 @@ export async function getBestSwapRouteBy(
   routeType: TradeType,
   percentToQuotes: { [percent: number]: RouteWithValidQuote[] },
   percents: number[],
-  chainId: ChainId,
+  chainId: ChainIdWithChiliz,
   by: (routeQuote: RouteWithValidQuote) => CurrencyAmount,
   routingConfig: AlphaRouterConfig,
   portionProvider: IPortionProvider,

@@ -1,7 +1,7 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { ChainId, Token } from '@uniswap/sdk-core';
 
-import { log, metric, MetricLoggerUnit } from '../util';
+import { ChainIdWithChiliz, log, metric, MetricLoggerUnit } from '../util';
 
 import { ICache } from './cache';
 import { ProviderConfig } from './provider';
@@ -37,11 +37,11 @@ export interface ITokenPropertiesProvider {
 }
 
 export class TokenPropertiesProvider implements ITokenPropertiesProvider {
-  private CACHE_KEY = (chainId: ChainId, address: string) =>
+  private CACHE_KEY = (chainId: ChainIdWithChiliz, address: string) =>
     `token-properties-${chainId}-${address}`;
 
   constructor(
-    private chainId: ChainId,
+    private chainId: ChainIdWithChiliz,
     private tokenPropertiesCache: ICache<TokenPropertiesResult>,
     private tokenFeeFetcher: ITokenFeeFetcher,
     private allowList = DEFAULT_ALLOWLIST,

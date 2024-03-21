@@ -1,7 +1,18 @@
-import { CHAIN_TO_ADDRESSES_MAP, ChainId, SWAP_ROUTER_02_ADDRESSES as SWAP_ROUTER_02_ADDRESSES_HELPER, Token } from '@uniswap/sdk-core';
+import {
+  ChainId,
+  CHAIN_TO_ADDRESSES_MAP,
+  SWAP_ROUTER_02_ADDRESSES as SWAP_ROUTER_02_ADDRESSES_HELPER,
+  Token,
+} from '@uniswap/sdk-core';
 import { FACTORY_ADDRESS } from '@uniswap/v3-sdk';
 
 import { NETWORKS_WITH_SAME_UNISWAP_ADDRESSES } from './chains';
+
+export enum ExtendedChainId {
+  CHILIZ = 88888,
+}
+
+export type ChainIdWithChiliz = ChainId | ExtendedChainId;
 
 export const BNB_TICK_LENS_ADDRESS =
   CHAIN_TO_ADDRESSES_MAP[ChainId.BNB].tickLensAddress;
@@ -88,11 +99,18 @@ export const UNISWAP_MULTICALL_ADDRESSES: AddressMap = {
     CHAIN_TO_ADDRESSES_MAP[ChainId.BASE_GOERLI].multicallAddress,
   [ChainId.BASE]: CHAIN_TO_ADDRESSES_MAP[ChainId.BASE].multicallAddress,
   [ChainId.BLAST]: CHAIN_TO_ADDRESSES_MAP[ChainId.BLAST].multicallAddress,
+  [88888]: '0x24d8907bf697d4769470210dc144193436DF7C07',
   // TODO: Gnosis + Moonbeam contracts to be deployed
 };
 
-export const SWAP_ROUTER_02_ADDRESSES= (chainId: number): string => {
-  return SWAP_ROUTER_02_ADDRESSES_HELPER(chainId) ?? '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45';
+export const SWAP_ROUTER_02_ADDRESSES = (chainId: number): string => {
+  const address = SWAP_ROUTER_02_ADDRESSES_HELPER(chainId);
+  if (!address)
+    throw new Error(
+      'SWAP_ROUTER_02_ADDRESSES: No address found for chainId ' + chainId
+    );
+
+  return address ?? '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45';
 };
 
 export const OVM_GASPRICE_ADDRESS =
@@ -124,7 +142,7 @@ export function constructSameAddressMap<T extends string>(
 
 export const WETH9: {
   [chainId in Exclude<
-    ChainId,
+    ChainIdWithChiliz,
     | ChainId.POLYGON
     | ChainId.POLYGON_MUMBAI
     | ChainId.CELO
@@ -222,7 +240,14 @@ export const WETH9: {
     18,
     'WETH',
     'Wrapped Ether'
-  )
+  ),
+  [ExtendedChainId.CHILIZ]: new Token(
+    ExtendedChainId.CHILIZ,
+    '0x677F7e16C7Dd57be1D4C8aD1244883214953DC47',
+    18,
+    'WCHZ',
+    'Wrapped Chiliz'
+  ),
 };
 
 export const BEACON_CHAIN_DEPOSIT_ADDRESS =

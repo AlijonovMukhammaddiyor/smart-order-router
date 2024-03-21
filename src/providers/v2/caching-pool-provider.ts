@@ -1,12 +1,14 @@
-import { ChainId, Token } from '@uniswap/sdk-core';
+import { Token } from '@uniswap/sdk-core';
 import { Pair } from '@uniswap/v2-sdk';
 import _ from 'lodash';
 
+import { ChainIdWithChiliz } from '../../util';
 import { log } from '../../util/log';
 
 import { ICache } from './../cache';
 import { ProviderConfig } from './../provider';
 import { IV2PoolProvider, V2PoolAccessor } from './pool-provider';
+import { V2SubgraphPool } from './subgraph-provider';
 
 /**
  * Provider for getting V2 pools, with functionality for caching the results per block.
@@ -15,7 +17,7 @@ import { IV2PoolProvider, V2PoolAccessor } from './pool-provider';
  * @class CachingV2PoolProvider
  */
 export class CachingV2PoolProvider implements IV2PoolProvider {
-  private POOL_KEY = (chainId: ChainId, address: string) =>
+  private POOL_KEY = (chainId: ChainIdWithChiliz, address: string) =>
     `pool-${chainId}-${address}`;
 
   /**
@@ -25,7 +27,7 @@ export class CachingV2PoolProvider implements IV2PoolProvider {
    * @param cache Cache instance to hold cached pools.
    */
   constructor(
-    protected chainId: ChainId,
+    protected chainId: ChainIdWithChiliz,
     protected poolProvider: IV2PoolProvider,
     // Cache is block aware. For V2 pools we need to use the current blocks reserves values since
     // we compute quotes off-chain.
@@ -35,19 +37,20 @@ export class CachingV2PoolProvider implements IV2PoolProvider {
 
   public async getPools(
     tokenPairs: [Token, Token][],
+    chilizPools: V2SubgraphPool[], // used to pass to getPoolAddress
     providerConfig?: ProviderConfig
   ): Promise<V2PoolAccessor> {
     const poolAddressSet: Set<string> = new Set<string>();
     const poolsToGetTokenPairs: Array<[Token, Token]> = [];
     const poolsToGetAddresses: string[] = [];
     const poolAddressToPool: { [poolAddress: string]: Pair } = {};
-
     const blockNumber = await providerConfig?.blockNumber;
 
     for (const [tokenA, tokenB] of tokenPairs) {
       const { poolAddress, token0, token1 } = this.getPoolAddress(
         tokenA,
-        tokenB
+        tokenB,
+        chilizPools
       );
 
       if (poolAddressSet.has(poolAddress)) {
@@ -95,6 +98,7 @@ export class CachingV2PoolProvider implements IV2PoolProvider {
     if (poolsToGetAddresses.length > 0) {
       const poolAccessor = await this.poolProvider.getPools(
         poolsToGetTokenPairs,
+        chilizPools,
         {
           ...providerConfig,
           enableFeeOnTransferFeeFetching: true,
@@ -115,7 +119,11 @@ export class CachingV2PoolProvider implements IV2PoolProvider {
 
     return {
       getPool: (tokenA: Token, tokenB: Token): Pair | undefined => {
-        const { poolAddress } = this.getPoolAddress(tokenA, tokenB);
+        const { poolAddress } = this.getPoolAddress(
+          tokenA,
+          tokenB,
+          chilizPools
+        );
         return poolAddressToPool[poolAddress];
       },
       getPoolByAddress: (address: string): Pair | undefined =>
@@ -126,8 +134,9 @@ export class CachingV2PoolProvider implements IV2PoolProvider {
 
   public getPoolAddress(
     tokenA: Token,
-    tokenB: Token
+    tokenB: Token,
+    pools: V2SubgraphPool[]
   ): { poolAddress: string; token0: Token; token1: Token } {
-    return this.poolProvider.getPoolAddress(tokenA, tokenB);
+    return this.poolProvider.getPoolAddress(tokenA, tokenB, pools);
   }
 }

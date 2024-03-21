@@ -1,12 +1,14 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { BaseProvider } from '@ethersproject/providers';
-import { ChainId } from '@uniswap/sdk-core';
 import _ from 'lodash';
 import stats from 'stats-lite';
 
 import { UniswapInterfaceMulticall__factory } from '../types/v3/factories/UniswapInterfaceMulticall__factory';
 import { UniswapInterfaceMulticall } from '../types/v3/UniswapInterfaceMulticall';
-import { UNISWAP_MULTICALL_ADDRESSES } from '../util/addresses';
+import {
+  ChainIdWithChiliz,
+  UNISWAP_MULTICALL_ADDRESSES,
+} from '../util/addresses';
 import { log } from '../util/log';
 
 import {
@@ -34,7 +36,7 @@ export class UniswapMulticallProvider extends IMulticallProvider<UniswapMultical
   private multicallContract: UniswapInterfaceMulticall;
 
   constructor(
-    protected chainId: ChainId,
+    protected chainId: ChainIdWithChiliz,
     protected provider: BaseProvider,
     protected gasLimitPerCall = 1_000_000
   ) {
@@ -46,6 +48,11 @@ export class UniswapMulticallProvider extends IMulticallProvider<UniswapMultical
         `No address for Uniswap Multicall Contract on chain id: ${chainId}`
       );
     }
+
+    log.info('UniswapMulticallProvider initialized', {
+      chainId,
+      multicallAddress,
+    });
 
     this.multicallContract = UniswapInterfaceMulticall__factory.connect(
       multicallAddress,

@@ -1,6 +1,6 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { Protocol } from '@uniswap/router-sdk';
-import { ChainId, Currency, Token, TradeType } from '@uniswap/sdk-core';
+import { Currency, Token, TradeType } from '@uniswap/sdk-core';
 import { Pair } from '@uniswap/v2-sdk';
 import { Pool } from '@uniswap/v3-sdk';
 import _ from 'lodash';
@@ -10,8 +10,10 @@ import {
   ITokenProvider,
   ITokenValidatorProvider,
   TokenValidationResult,
+  V2SubgraphPool,
 } from '../../../providers';
 import {
+  ChainIdWithChiliz,
   CurrencyAmount,
   log,
   metric,
@@ -46,14 +48,14 @@ export abstract class BaseQuoter<
   Route extends V2Route | V3Route | MixedRoute
 > {
   protected tokenProvider: ITokenProvider;
-  protected chainId: ChainId;
+  protected chainId: ChainIdWithChiliz;
   protected protocol: Protocol;
   protected blockedTokenListProvider?: ITokenListProvider;
   protected tokenValidatorProvider?: ITokenValidatorProvider;
 
   constructor(
     tokenProvider: ITokenProvider,
-    chainId: ChainId,
+    chainId: ChainIdWithChiliz,
     protocol: Protocol,
     blockedTokenListProvider?: ITokenListProvider,
     tokenValidatorProvider?: ITokenValidatorProvider
@@ -82,6 +84,7 @@ export abstract class BaseQuoter<
     tokenOut: Token,
     candidatePools: CandidatePools,
     tradeType: TradeType,
+    chilizPools: V2SubgraphPool[],
     routingConfig: AlphaRouterConfig
   ): Promise<GetRoutesResult<Route>>;
 
@@ -105,6 +108,7 @@ export abstract class BaseQuoter<
     percents: number[],
     quoteToken: Token,
     tradeType: TradeType,
+    chilizPools: V2SubgraphPool[],
     routingConfig: AlphaRouterConfig,
     candidatePools?: CandidatePoolsBySelectionCriteria,
     gasModel?: IGasModel<RouteWithValidQuote>,
@@ -135,6 +139,7 @@ export abstract class BaseQuoter<
     candidatePools: CandidatePools,
     tradeType: TradeType,
     routingConfig: AlphaRouterConfig,
+    chilizPools: V2SubgraphPool[],
     gasModel?: IGasModel<RouteWithValidQuote>,
     gasPriceWei?: BigNumber
   ): Promise<GetQuotesResult> {
@@ -143,6 +148,7 @@ export abstract class BaseQuoter<
       tokenOut,
       candidatePools,
       tradeType,
+      chilizPools,
       routingConfig
     ).then((routesResult) => {
       if (routesResult.routes.length == 1) {
@@ -175,6 +181,7 @@ export abstract class BaseQuoter<
         percents,
         quoteToken,
         tradeType,
+        chilizPools,
         routingConfig,
         routesResult.candidatePools,
         gasModel,

@@ -4,7 +4,7 @@ import {
   SwapRouter as SwapRouter02,
   Trade,
 } from '@uniswap/router-sdk';
-import { ChainId, Currency, TradeType } from '@uniswap/sdk-core';
+import { Currency, TradeType } from '@uniswap/sdk-core';
 import {
   SwapRouter as UniversalRouter,
   UNIVERSAL_ROUTER_ADDRESS,
@@ -14,6 +14,7 @@ import { Route as V3RouteRaw } from '@uniswap/v3-sdk';
 import _ from 'lodash';
 
 import {
+  ChainIdWithChiliz,
   CurrencyAmount,
   MethodParameters,
   MixedRouteWithValidQuote,
@@ -231,7 +232,7 @@ export function buildTrade<TTradeType extends TradeType>(
 export function buildSwapMethodParameters(
   trade: Trade<Currency, Currency, TradeType>,
   swapConfig: SwapOptions,
-  chainId: ChainId
+  chainId: ChainIdWithChiliz
 ): MethodParameters {
   if (swapConfig.type == SwapType.UNIVERSAL_ROUTER) {
     return {

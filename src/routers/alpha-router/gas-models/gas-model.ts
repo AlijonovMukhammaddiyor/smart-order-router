@@ -7,6 +7,7 @@ import {
 import { Pair } from '@uniswap/v2-sdk';
 import { Pool } from '@uniswap/v3-sdk';
 
+import { V2SubgraphPool } from '../../../providers';
 import { ProviderConfig } from '../../../providers/provider';
 import {
   CUSD_CELO,
@@ -20,7 +21,8 @@ import {
   DAI_OPTIMISM_GOERLI,
   DAI_OPTIMISM_SEPOLIA,
   DAI_POLYGON_MUMBAI,
-  DAI_SEPOLIA, USDB_BLAST,
+  DAI_SEPOLIA,
+  USDB_BLAST,
   USDC_ARBITRUM,
   USDC_ARBITRUM_GOERLI,
   USDC_ARBITRUM_SEPOLIA,
@@ -52,14 +54,19 @@ import {
   USDT_OPTIMISM,
   USDT_OPTIMISM_GOERLI,
   USDT_OPTIMISM_SEPOLIA,
-  WBTC_GOERLI
+  WBAR_CHILIZ,
+  WBTC_GOERLI,
 } from '../../../providers/token-provider';
 import { IV2PoolProvider } from '../../../providers/v2/pool-provider';
 import {
   ArbitrumGasData,
   IL2GasDataProvider,
 } from '../../../providers/v3/gas-data-provider';
-import { WRAPPED_NATIVE_CURRENCY } from '../../../util';
+import {
+  ChainIdWithChiliz,
+  ExtendedChainId,
+  WRAPPED_NATIVE_CURRENCY,
+} from '../../../util';
 import { CurrencyAmount } from '../../../util/amounts';
 import {
   MixedRouteWithValidQuote,
@@ -71,50 +78,57 @@ import {
 // When adding new usd gas tokens, ensure the tokens are ordered
 // from tokens with highest decimals to lowest decimals. For example,
 // DAI_AVAX has 18 decimals and comes before USDC_AVAX which has 6 decimals.
-export const usdGasTokensByChain: { [chainId in ChainId]?: Token[] } = {
-  [ChainId.MAINNET]: [DAI_MAINNET, USDC_MAINNET, USDT_MAINNET],
-  [ChainId.ARBITRUM_ONE]: [
-    DAI_ARBITRUM,
-    USDC_ARBITRUM,
-    USDC_NATIVE_ARBITRUM,
-    USDT_ARBITRUM,
-  ],
-  [ChainId.OPTIMISM]: [
-    DAI_OPTIMISM,
-    USDC_OPTIMISM,
-    USDC_NATIVE_OPTIMISM,
-    USDT_OPTIMISM,
-  ],
-  [ChainId.OPTIMISM_GOERLI]: [
-    DAI_OPTIMISM_GOERLI,
-    USDC_OPTIMISM_GOERLI,
-    USDT_OPTIMISM_GOERLI,
-  ],
-  [ChainId.OPTIMISM_SEPOLIA]: [
-    DAI_OPTIMISM_SEPOLIA,
-    USDC_OPTIMISM_SEPOLIA,
-    USDT_OPTIMISM_SEPOLIA,
-  ],
-  [ChainId.ARBITRUM_GOERLI]: [USDC_ARBITRUM_GOERLI],
-  [ChainId.ARBITRUM_SEPOLIA]: [USDC_ARBITRUM_SEPOLIA],
-  [ChainId.GOERLI]: [DAI_GOERLI, USDC_GOERLI, USDT_GOERLI, WBTC_GOERLI],
-  [ChainId.SEPOLIA]: [USDC_SEPOLIA, DAI_SEPOLIA],
-  [ChainId.POLYGON]: [USDC_POLYGON, USDC_NATIVE_POLYGON],
-  [ChainId.POLYGON_MUMBAI]: [DAI_POLYGON_MUMBAI],
-  [ChainId.CELO]: [CUSD_CELO, USDC_CELO, USDC_NATIVE_CELO, USDC_WORMHOLE_CELO],
-  [ChainId.CELO_ALFAJORES]: [CUSD_CELO_ALFAJORES],
-  [ChainId.GNOSIS]: [USDC_ETHEREUM_GNOSIS],
-  [ChainId.MOONBEAM]: [USDC_MOONBEAM],
-  [ChainId.BNB]: [USDT_BNB, USDC_BNB, DAI_BNB],
-  [ChainId.AVALANCHE]: [
-    DAI_AVAX,
-    USDC_AVAX,
-    USDC_NATIVE_AVAX,
-    USDC_BRIDGED_AVAX,
-  ],
-  [ChainId.BASE]: [USDC_BASE, USDC_NATIVE_BASE],
-  [ChainId.BLAST]: [USDB_BLAST],
-};
+export const usdGasTokensByChain: { [chainId in ChainIdWithChiliz]?: Token[] } =
+  {
+    [ChainId.MAINNET]: [DAI_MAINNET, USDC_MAINNET, USDT_MAINNET],
+    [ChainId.ARBITRUM_ONE]: [
+      DAI_ARBITRUM,
+      USDC_ARBITRUM,
+      USDC_NATIVE_ARBITRUM,
+      USDT_ARBITRUM,
+    ],
+    [ChainId.OPTIMISM]: [
+      DAI_OPTIMISM,
+      USDC_OPTIMISM,
+      USDC_NATIVE_OPTIMISM,
+      USDT_OPTIMISM,
+    ],
+    [ChainId.OPTIMISM_GOERLI]: [
+      DAI_OPTIMISM_GOERLI,
+      USDC_OPTIMISM_GOERLI,
+      USDT_OPTIMISM_GOERLI,
+    ],
+    [ChainId.OPTIMISM_SEPOLIA]: [
+      DAI_OPTIMISM_SEPOLIA,
+      USDC_OPTIMISM_SEPOLIA,
+      USDT_OPTIMISM_SEPOLIA,
+    ],
+    [ChainId.ARBITRUM_GOERLI]: [USDC_ARBITRUM_GOERLI],
+    [ChainId.ARBITRUM_SEPOLIA]: [USDC_ARBITRUM_SEPOLIA],
+    [ChainId.GOERLI]: [DAI_GOERLI, USDC_GOERLI, USDT_GOERLI, WBTC_GOERLI],
+    [ChainId.SEPOLIA]: [USDC_SEPOLIA, DAI_SEPOLIA],
+    [ChainId.POLYGON]: [USDC_POLYGON, USDC_NATIVE_POLYGON],
+    [ChainId.POLYGON_MUMBAI]: [DAI_POLYGON_MUMBAI],
+    [ChainId.CELO]: [
+      CUSD_CELO,
+      USDC_CELO,
+      USDC_NATIVE_CELO,
+      USDC_WORMHOLE_CELO,
+    ],
+    [ChainId.CELO_ALFAJORES]: [CUSD_CELO_ALFAJORES],
+    [ChainId.GNOSIS]: [USDC_ETHEREUM_GNOSIS],
+    [ChainId.MOONBEAM]: [USDC_MOONBEAM],
+    [ChainId.BNB]: [USDT_BNB, USDC_BNB, DAI_BNB],
+    [ChainId.AVALANCHE]: [
+      DAI_AVAX,
+      USDC_AVAX,
+      USDC_NATIVE_AVAX,
+      USDC_BRIDGED_AVAX,
+    ],
+    [ChainId.BASE]: [USDC_BASE, USDC_NATIVE_BASE],
+    [ChainId.BLAST]: [USDB_BLAST],
+    [ExtendedChainId.CHILIZ]: [WBAR_CHILIZ], // @warning: assumption about whether I should use these tokens
+  };
 
 export type L1ToL2GasCosts = {
   gasUsedL1: BigNumber;
@@ -144,12 +158,13 @@ export type BuildOnChainGasModelFactoryType = {
 };
 
 export type BuildV2GasModelFactoryType = {
-  chainId: ChainId;
+  chainId: ChainIdWithChiliz;
   gasPriceWei: BigNumber;
   poolProvider: IV2PoolProvider;
   token: Token;
   l2GasDataProvider?: IL2GasDataProvider<ArbitrumGasData>;
   providerConfig?: GasModelProviderConfig;
+  chilizPools: V2SubgraphPool[];
 };
 
 export type LiquidityCalculationPools = {
@@ -242,7 +257,7 @@ export abstract class IOnChainGasModelFactory {
 // Gets the native price of the pool, dependent on 0 or 1
 // quotes across the pool
 export const getQuoteThroughNativePool = (
-  chainId: ChainId,
+  chainId: ChainIdWithChiliz,
   nativeTokenAmount: CurrencyAmountRaw<Token>,
   nativeTokenPool: Pool | Pair
 ): CurrencyAmount => {

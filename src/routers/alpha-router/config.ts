@@ -1,9 +1,11 @@
 import { ChainId } from '@uniswap/sdk-core';
 
+import { ChainIdWithChiliz } from '../../util';
+
 import { AlphaRouterConfig, LowerCaseStringArray } from './alpha-router';
 
 export const DEFAULT_ROUTING_CONFIG_BY_CHAIN = (
-  chainId: ChainId
+  chainId: ChainIdWithChiliz
 ): AlphaRouterConfig => {
   switch (chainId) {
     // Optimism

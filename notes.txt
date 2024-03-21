@@ -1,0 +1,25 @@
+**MAJOR CHANGES**
+
+@warning -> analyze them
+
+1. UNISWAP_MULTICALL_ADDRESSES -> addresses.ts
+2. WETH9 -> add Weth token -> addresses.ts
+3. Add Chiliz data to SUPPORTED_CHAINS, V2_SUPPORTED, HAS_L1_FEE, ID_TO_CHAIN_ID, ChainName, NativeCurrencyName, NATIVE_NAMES_BY_ID, NATIVE_CURRENCY, ID_TO_NETWORK_NAME,ID_TO_PROVIDER, WRAPPED_NATIVE_CURRENCY -> chains.ts
+4. add Chiliz tokens to CACHE_SEED_TOKENS - caching-token-provider.ts
+5. add chiliz tokens to DAI_ON, USDT_ON, and some tokens -> token-provider.ts
+6. adjust getPools to fetch chiliz data -> uri-subgraph-provider.ts
+7. Add Chiliz tokens to BASES_TO_CHECK_TRADES_AGAINST -> v2/static-subgraph-provider.ts
+7. Add Chiliz tokens to BASES_TO_CHECK_TRADES_AGAINST -> v3/static-subgraph-provider.ts
+9. add await this.v2SubgraphProvider.getPools() before calling getGasModels as it needs to update the v2pools.json first -> alpha-router.ts
+10. remove parts related to v3 nd mixed route in getGasModels -> alpha-router.ts
+11. add chiliz tokens to usdGasTokensByChain -> gas-models.ts
+12. add default returns to BASE_SWAP_COST, COST_PER_INIT_TICK, COST_PER_HOP -> v3/gas-costs.ts
+13. add chiliz tokens to BASES_TO_CHECK_TRADES_AGAINST -> legacy-router/bases.ts
+14. adjust alpha-router.integration.test.ts, comment out V3 only tests
+15. because we are getting pool address from subgraph data, change the getPoolAddress logic in - pool-provider.ts in v2
+
+ // 15. Changed the logger to winston for the whole project
+
+ 15. Change ChainId to ChainIdWithCHiliz everywhere in the project
+
+ So many other changes because we have to fetch pools from uri - getPools_ function

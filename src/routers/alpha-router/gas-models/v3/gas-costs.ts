@@ -2,13 +2,14 @@ import { BigNumber } from '@ethersproject/bignumber';
 import { ChainId, Currency, Token } from '@uniswap/sdk-core';
 
 import { AAVE_MAINNET, LIDO_MAINNET } from '../../../../providers';
+import { ChainIdWithChiliz, ExtendedChainId } from '../../../../util';
 import { V3Route } from '../../../router';
 
 // Cost for crossing an uninitialized tick.
 export const COST_PER_UNINIT_TICK = BigNumber.from(0);
 
 //l2 execution fee on optimism is roughly the same as mainnet
-export const BASE_SWAP_COST = (id: ChainId): BigNumber => {
+export const BASE_SWAP_COST = (id: ChainIdWithChiliz): BigNumber => {
   switch (id) {
     case ChainId.MAINNET:
     case ChainId.GOERLI:
@@ -36,6 +37,8 @@ export const BASE_SWAP_COST = (id: ChainId): BigNumber => {
     case ChainId.CELO:
     case ChainId.CELO_ALFAJORES:
       return BigNumber.from(2000);
+    case ExtendedChainId.CHILIZ:
+      return BigNumber.from(2000); // @warning: this is assumption about chiliz chain
 
     //TODO determine if sufficient
     case ChainId.GNOSIS:
@@ -43,8 +46,10 @@ export const BASE_SWAP_COST = (id: ChainId): BigNumber => {
     case ChainId.MOONBEAM:
       return BigNumber.from(2000);
   }
+
+  return BigNumber.from(0);
 };
-export const COST_PER_INIT_TICK = (id: ChainId): BigNumber => {
+export const COST_PER_INIT_TICK = (id: ChainIdWithChiliz): BigNumber => {
   switch (id) {
     case ChainId.MAINNET:
     case ChainId.GOERLI:
@@ -76,6 +81,8 @@ export const COST_PER_INIT_TICK = (id: ChainId): BigNumber => {
       return BigNumber.from(31000);
     case ChainId.MOONBEAM:
       return BigNumber.from(31000);
+    case ExtendedChainId.CHILIZ:
+      return BigNumber.from(31000); // @warning: this is assumption about chiliz chain
   }
 };
 
@@ -139,14 +146,14 @@ export const TOKEN_OVERHEAD = (id: ChainId, route: V3Route): BigNumber => {
 };
 
 // TODO: change per chain
-export const NATIVE_WRAP_OVERHEAD = (id: ChainId): BigNumber => {
+export const NATIVE_WRAP_OVERHEAD = (id: ChainIdWithChiliz): BigNumber => {
   switch (id) {
     default:
       return BigNumber.from(27938);
   }
 };
 
-export const NATIVE_UNWRAP_OVERHEAD = (id: ChainId): BigNumber => {
+export const NATIVE_UNWRAP_OVERHEAD = (id: ChainIdWithChiliz): BigNumber => {
   switch (id) {
     default:
       return BigNumber.from(36000);
@@ -154,7 +161,7 @@ export const NATIVE_UNWRAP_OVERHEAD = (id: ChainId): BigNumber => {
 };
 
 export const NATIVE_OVERHEAD = (
-  chainId: ChainId,
+  chainId: ChainIdWithChiliz,
   amount: Currency,
   quote: Currency
 ): BigNumber => {

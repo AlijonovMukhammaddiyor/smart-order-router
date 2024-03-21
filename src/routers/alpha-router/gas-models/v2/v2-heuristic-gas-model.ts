@@ -1,11 +1,17 @@
 import { BigNumber } from '@ethersproject/bignumber';
-import { ChainId, Token } from '@uniswap/sdk-core';
+import { BaseProvider } from '@ethersproject/providers';
+import { Token } from '@uniswap/sdk-core';
 import { Pair } from '@uniswap/v2-sdk';
 import _ from 'lodash';
 
+import { V2SubgraphPool } from '../../../../providers';
 import { ProviderConfig } from '../../../../providers/provider';
 import { IV2PoolProvider } from '../../../../providers/v2/pool-provider';
-import { log, WRAPPED_NATIVE_CURRENCY } from '../../../../util';
+import {
+  ChainIdWithChiliz,
+  log,
+  WRAPPED_NATIVE_CURRENCY,
+} from '../../../../util';
 import { CurrencyAmount } from '../../../../util/amounts';
 import {
   calculateL1GasFeesHelper,
@@ -20,7 +26,6 @@ import {
   IV2GasModelFactory,
   usdGasTokensByChain,
 } from '../gas-model';
-import { BaseProvider } from '@ethersproject/providers';
 
 // Constant cost for doing any swap regardless of pools.
 export const BASE_SWAP_COST = BigNumber.from(135000); // 115000, bumped up by 20_000 @eric 7/8/2022
@@ -60,7 +65,10 @@ export class V2HeuristicGasModelFactory extends IV2GasModelFactory {
     token,
     l2GasDataProvider,
     providerConfig,
-  }: BuildV2GasModelFactoryType): Promise<IGasModel<V2RouteWithValidQuote>> {
+    chilizPools,
+  }: BuildV2GasModelFactoryType & {
+    chilizPools?: V2SubgraphPool[];
+  }): Promise<IGasModel<V2RouteWithValidQuote>> {
     const l2GasData = l2GasDataProvider
       ? await l2GasDataProvider.getGasData(providerConfig)
       : undefined;
@@ -68,6 +76,7 @@ export class V2HeuristicGasModelFactory extends IV2GasModelFactory {
     const usdPoolPromise: Promise<Pair> = this.getHighestLiquidityUSDPool(
       chainId,
       poolProvider,
+      chilizPools,
       providerConfig
     );
 
@@ -79,6 +88,7 @@ export class V2HeuristicGasModelFactory extends IV2GasModelFactory {
             chainId,
             providerConfig.gasToken,
             poolProvider,
+            chilizPools,
             providerConfig
           )
         : Promise.resolve(null);
@@ -94,6 +104,7 @@ export class V2HeuristicGasModelFactory extends IV2GasModelFactory {
         chainId,
         token,
         poolProvider,
+        chilizPools,
         providerConfig
       );
     }
@@ -112,7 +123,12 @@ export class V2HeuristicGasModelFactory extends IV2GasModelFactory {
       gasCostL1QuoteToken: CurrencyAmount;
     }> => {
       const nativePool = !token.equals(WRAPPED_NATIVE_CURRENCY[chainId])
-        ? await getV2NativePool(token, poolProvider, providerConfig)
+        ? await getV2NativePool(
+            token,
+            poolProvider,
+            chilizPools,
+            providerConfig
+          )
         : null;
 
       return await calculateL1GasFeesHelper(
@@ -201,7 +217,7 @@ export class V2HeuristicGasModelFactory extends IV2GasModelFactory {
   private estimateGas(
     routeWithValidQuote: V2RouteWithValidQuote,
     gasPriceWei: BigNumber,
-    chainId: ChainId,
+    chainId: ChainIdWithChiliz,
     providerConfig?: GasModelProviderConfig
   ) {
     const hops = routeWithValidQuote.route.pairs.length;
@@ -224,15 +240,17 @@ export class V2HeuristicGasModelFactory extends IV2GasModelFactory {
   }
 
   private async getEthPool(
-    chainId: ChainId,
+    chainId: ChainIdWithChiliz,
     token: Token,
     poolProvider: IV2PoolProvider,
+    chilizPools: V2SubgraphPool[],
     providerConfig?: ProviderConfig
   ): Promise<Pair | null> {
     const weth = WRAPPED_NATIVE_CURRENCY[chainId]!;
 
     const poolAccessor = await poolProvider.getPools(
       [[weth, token]],
+      chilizPools,
       providerConfig
     );
     const pool = poolAccessor.getPool(weth, token);
@@ -255,8 +273,9 @@ export class V2HeuristicGasModelFactory extends IV2GasModelFactory {
   }
 
   private async getHighestLiquidityUSDPool(
-    chainId: ChainId,
+    chainId: ChainIdWithChiliz,
     poolProvider: IV2PoolProvider,
+    chilizPools: V2SubgraphPool[],
     providerConfig?: ProviderConfig
   ): Promise<Pair> {
     const usdTokens = usdGasTokensByChain[chainId];
@@ -271,7 +290,11 @@ export class V2HeuristicGasModelFactory extends IV2GasModelFactory {
       usdToken,
       WRAPPED_NATIVE_CURRENCY[chainId]!,
     ]);
-    const poolAccessor = await poolProvider.getPools(usdPools, providerConfig);
+    const poolAccessor = await poolProvider.getPools(
+      usdPools,
+      chilizPools,
+      providerConfig
+    );
     const poolsRaw = poolAccessor.getAllPools();
     const pools = _.filter(
       poolsRaw,

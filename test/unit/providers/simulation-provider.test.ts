@@ -19,7 +19,10 @@ import {
   USDC_MAINNET,
   V2PoolProvider,
 } from '../../../src';
-import { IPortionProvider, PortionProvider } from '../../../src/providers/portion-provider';
+import {
+  IPortionProvider,
+  PortionProvider,
+} from '../../../src/providers/portion-provider';
 import { Erc20 } from '../../../src/types/other/Erc20';
 import { Permit2 } from '../../../src/types/other/Permit2';
 
@@ -53,7 +56,7 @@ jest.mock('../../../src/util/gas-factory-helpers', () => ({
     estimatedGasUsed: BigNumber,
     estimatedGasUsedQuoteToken: CurrencyAmount,
     estimatedGasUsedUSD: CurrencyAmount,
-    _swapOptions?: SwapOptions,
+    _swapOptions?: SwapOptions
   ): SwapRoute => {
     return {
       ...swapRoute,
@@ -195,7 +198,7 @@ describe('Fallback Tenderly simulator', () => {
         return BigNumber.from(0);
       },
     } as unknown as Erc20;
-    const ethInputAmount =  CurrencyAmount.fromRawAmount(nativeOnChain(1), 300)
+    const ethInputAmount = CurrencyAmount.fromRawAmount(nativeOnChain(1), 300);
     const swapRouteWithGasEstimate = await simulator.simulate(
       fromAddress,
       swapOptions,
@@ -203,7 +206,7 @@ describe('Fallback Tenderly simulator', () => {
         ...swaproute,
         trade: {
           inputAmount: ethInputAmount,
-          tradeType: 0
+          tradeType: 0,
         } as Trade<any, any, any>,
       },
       CurrencyAmount.fromRawAmount(nativeOnChain(1), 300),
@@ -359,9 +362,7 @@ describe('Eth estimate gas simulator', () => {
         return BigNumber.from(0);
       },
     } as unknown as Erc20;
-    sinon
-      .stub(provider, <any>'getBalance')
-      .resolves(BigNumber.from(325));
+    sinon.stub(provider, <any>'getBalance').resolves(BigNumber.from(325));
     const swapRouteWithGasEstimate = await simulator.simulate(
       fromAddress,
       swapOptions,
@@ -434,10 +435,10 @@ describe('Eth estimate gas simulator', () => {
     );
   });
   test('when provider.estimateGas throws', async () => {
-    sinon
-      .stub(provider, <any>'getBalance')
-      .resolves(BigNumber.from(325));
-    sinon.replace(provider, 'estimateGas', () => {throw new Error()})
+    sinon.stub(provider, <any>'getBalance').resolves(BigNumber.from(325));
+    sinon.replace(provider, 'estimateGas', () => {
+      throw new Error();
+    });
     const swapRouteWithGasEstimate = await simulator.simulate(
       fromAddress,
       swapOptions,

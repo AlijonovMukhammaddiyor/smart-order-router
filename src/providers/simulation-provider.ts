@@ -7,13 +7,19 @@ import {
   GasModelProviderConfig,
   SwapOptions,
   SwapRoute,
-  SwapType
+  SwapType,
 } from '../routers';
 import { Erc20__factory } from '../types/other/factories/Erc20__factory';
 import { Permit2__factory } from '../types/other/factories/Permit2__factory';
-import { CurrencyAmount, log, SWAP_ROUTER_02_ADDRESSES } from '../util';
+import {
+  ChainIdWithChiliz,
+  CurrencyAmount,
+  log,
+  SWAP_ROUTER_02_ADDRESSES,
+} from '../util';
 
 import { IPortionProvider } from './portion-provider';
+import { V2SubgraphPool } from './v2/subgraph-provider';
 
 export type SimulationResult = {
   transaction: {
@@ -50,7 +56,7 @@ export abstract class Simulator {
   constructor(
     provider: JsonRpcProvider,
     portionProvider: IPortionProvider,
-    protected chainId: ChainId
+    protected chainId: ChainIdWithChiliz
   ) {
     this.provider = provider;
     this.portionProvider = portionProvider;
@@ -62,6 +68,7 @@ export abstract class Simulator {
     swapRoute: SwapRoute,
     amount: CurrencyAmount,
     quote: CurrencyAmount,
+    chilizPools: V2SubgraphPool[],
     providerConfig?: GasModelProviderConfig
   ): Promise<SwapRoute> {
     const neededBalance =
@@ -79,7 +86,13 @@ export abstract class Simulator {
         'User has sufficient balance to simulate. Simulating transaction.'
       );
       try {
-        return this.simulateTransaction(fromAddress, swapOptions, swapRoute, providerConfig);
+        return this.simulateTransaction(
+          fromAddress,
+          swapOptions,
+          swapRoute,
+          chilizPools,
+          providerConfig
+        );
       } catch (e) {
         log.error({ e }, 'Error simulating transaction');
         return {
@@ -100,6 +113,7 @@ export abstract class Simulator {
     fromAddress: string,
     swapOptions: SwapOptions,
     swapRoute: SwapRoute,
+    chilizPools: V2SubgraphPool[],
     providerConfig?: GasModelProviderConfig
   ): Promise<SwapRoute>;
 

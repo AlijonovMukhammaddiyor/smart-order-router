@@ -1,7 +1,7 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { Logger } from '@ethersproject/logger';
 import { SwapRouter, Trade } from '@uniswap/router-sdk';
-import { ChainId, Currency, Token, TradeType } from '@uniswap/sdk-core';
+import { Currency, Token, TradeType } from '@uniswap/sdk-core';
 import { FeeAmount, MethodParameters, Pool, Route } from '@uniswap/v3-sdk';
 import _ from 'lodash';
 
@@ -13,7 +13,7 @@ import {
   USDC_MAINNET,
 } from '../../providers/token-provider';
 import { IV3PoolProvider } from '../../providers/v3/pool-provider';
-import { SWAP_ROUTER_02_ADDRESSES } from '../../util';
+import { ChainIdWithChiliz, SWAP_ROUTER_02_ADDRESSES } from '../../util';
 import { CurrencyAmount } from '../../util/amounts';
 import { log } from '../../util/log';
 import { routeToString } from '../../util/routes';
@@ -27,7 +27,7 @@ import {
 } from './bases';
 
 export type LegacyRouterParams = {
-  chainId: ChainId;
+  chainId: ChainIdWithChiliz;
   multicall2Provider: IMulticallProvider;
   poolProvider: IV3PoolProvider;
   quoteProvider: IOnChainQuoteProvider;
@@ -47,7 +47,7 @@ export type LegacyRoutingConfig = {
  * with React/Redux hooks removed, and refactoring to allow re-use in other routers.
  */
 export class LegacyRouter {
-  protected chainId: ChainId;
+  protected chainId: ChainIdWithChiliz;
   protected multicall2Provider: IMulticallProvider;
   protected poolProvider: IV3PoolProvider;
   protected quoteProvider: IOnChainQuoteProvider;
@@ -434,7 +434,7 @@ export class LegacyRouter {
     tokenIn: Token,
     tokenOut: Token,
     pools: Pool[],
-    chainId: ChainId,
+    chainId: ChainIdWithChiliz,
     currentPath: Pool[] = [],
     allPaths: V3Route[] = [],
     startTokenIn: Token = tokenIn,

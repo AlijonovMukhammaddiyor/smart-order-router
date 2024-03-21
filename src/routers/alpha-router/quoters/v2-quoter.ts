@@ -1,6 +1,6 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { Protocol } from '@uniswap/router-sdk';
-import { ChainId, Currency, Token, TradeType } from '@uniswap/sdk-core';
+import { Currency, Token, TradeType } from '@uniswap/sdk-core';
 import _ from 'lodash';
 
 import {
@@ -11,8 +11,14 @@ import {
   IV2QuoteProvider,
   IV2SubgraphProvider,
   TokenValidationResult,
+  V2SubgraphPool,
 } from '../../../providers';
 import {
+  ArbitrumGasData,
+  IL2GasDataProvider,
+} from '../../../providers/v3/gas-data-provider';
+import {
+  ChainIdWithChiliz,
   CurrencyAmount,
   log,
   metric,
@@ -30,10 +36,6 @@ import {
 import { IGasModel, IV2GasModelFactory } from '../gas-models';
 import { NATIVE_OVERHEAD } from '../gas-models/v3/gas-costs';
 
-import {
-  ArbitrumGasData,
-  IL2GasDataProvider,
-} from '../../../providers/v3/gas-data-provider';
 import { BaseQuoter } from './base-quoter';
 import { GetQuotesResult } from './model/results/get-quotes-result';
 import { GetRoutesResult } from './model/results/get-routes-result';
@@ -51,7 +53,7 @@ export class V2Quoter extends BaseQuoter<V2CandidatePools, V2Route> {
     v2QuoteProvider: IV2QuoteProvider,
     v2GasModelFactory: IV2GasModelFactory,
     tokenProvider: ITokenProvider,
-    chainId: ChainId,
+    chainId: ChainIdWithChiliz,
     blockedTokenListProvider?: ITokenListProvider,
     tokenValidatorProvider?: ITokenValidatorProvider,
     l2GasDataProvider?: IL2GasDataProvider<ArbitrumGasData>
@@ -75,12 +77,14 @@ export class V2Quoter extends BaseQuoter<V2CandidatePools, V2Route> {
     tokenOut: Token,
     v2CandidatePools: V2CandidatePools,
     _tradeType: TradeType,
+    chilizPools: V2SubgraphPool[],
     routingConfig: AlphaRouterConfig
   ): Promise<GetRoutesResult<V2Route>> {
     const beforeGetRoutes = Date.now();
     // Fetch all the pools that we will consider routing via. There are thousands
     // of pools, so we filter them to a set of candidate pools that we expect will
     // result in good prices.
+    log.info(chilizPools.length);
     const { poolAccessor, candidatePools } = v2CandidatePools;
     const poolsRaw = poolAccessor.getAllPools();
 
@@ -138,6 +142,7 @@ export class V2Quoter extends BaseQuoter<V2CandidatePools, V2Route> {
     percents: number[],
     quoteToken: Token,
     tradeType: TradeType,
+    chilizPools: V2SubgraphPool[],
     _routingConfig: AlphaRouterConfig,
     candidatePools?: CandidatePoolsBySelectionCriteria,
     _gasModel?: IGasModel<V2RouteWithValidQuote>,
@@ -197,6 +202,7 @@ export class V2Quoter extends BaseQuoter<V2CandidatePools, V2Route> {
         ),
         gasToken,
       },
+      chilizPools,
     });
 
     metric.putMetric(
@@ -243,6 +249,7 @@ export class V2Quoter extends BaseQuoter<V2CandidatePools, V2Route> {
           quoteToken,
           tradeType,
           v2PoolProvider: this.v2PoolProvider,
+          chilizPools,
         });
 
         routesWithValidQuotes.push(routeWithValidQuote);
@@ -270,6 +277,7 @@ export class V2Quoter extends BaseQuoter<V2CandidatePools, V2Route> {
     quoteToken: Token,
     tradeType: TradeType,
     routingConfig: AlphaRouterConfig,
+    chilizPools: V2SubgraphPool[],
     gasPriceWei?: BigNumber
   ): Promise<GetQuotesResult> {
     const tokenPairs: [Token, Token][] = [];
@@ -278,7 +286,7 @@ export class V2Quoter extends BaseQuoter<V2CandidatePools, V2Route> {
     );
 
     return this.v2PoolProvider
-      .getPools(tokenPairs, routingConfig)
+      .getPools(tokenPairs, chilizPools, routingConfig)
       .then((poolAccesor) => {
         const routes = computeAllV2Routes(
           tokenIn,
@@ -293,6 +301,7 @@ export class V2Quoter extends BaseQuoter<V2CandidatePools, V2Route> {
           percents,
           quoteToken,
           tradeType,
+          chilizPools,
           routingConfig,
           undefined,
           undefined,

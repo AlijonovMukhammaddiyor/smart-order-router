@@ -45,6 +45,7 @@ import {
   UniswapMulticallProvider,
   URISubgraphProvider,
   V2QuoteProvider,
+  V2SubgraphPool,
   V2SubgraphProviderWithFallBacks,
   V3SubgraphProviderWithFallBacks,
 } from '../../providers';
@@ -81,23 +82,20 @@ import {
 } from '../../providers/v3/pool-provider';
 import { IV3SubgraphProvider } from '../../providers/v3/subgraph-provider';
 import { Erc20__factory } from '../../types/other/factories/Erc20__factory';
-import { SWAP_ROUTER_02_ADDRESSES, WRAPPED_NATIVE_CURRENCY } from '../../util';
+import { ChainIdWithChiliz, SWAP_ROUTER_02_ADDRESSES } from '../../util';
 import { CurrencyAmount } from '../../util/amounts';
 import {
   ID_TO_CHAIN_ID,
   ID_TO_NETWORK_NAME,
   V2_SUPPORTED,
 } from '../../util/chains';
-import {
-  getHighestLiquidityV3NativePool,
-  getHighestLiquidityV3USDPool,
-} from '../../util/gas-factory-helpers';
 import { log } from '../../util/log';
 import {
   buildSwapMethodParameters,
   buildTrade,
 } from '../../util/methodParameters';
 import { metric, MetricLoggerUnit } from '../../util/metric';
+import { getPools_ } from '../../util/pools';
 import { UNSUPPORTED_TOKENS } from '../../util/unsupported-tokens';
 import {
   IRouter,
@@ -141,7 +139,6 @@ import {
   IGasModel,
   IOnChainGasModelFactory,
   IV2GasModelFactory,
-  LiquidityCalculationPools,
 } from './gas-models/gas-model';
 import { MixedRouteHeuristicGasModelFactory } from './gas-models/mixedRoute/mixed-route-heuristic-gas-model';
 import { V2HeuristicGasModelFactory } from './gas-models/v2/v2-heuristic-gas-model';
@@ -153,7 +150,7 @@ export type AlphaRouterParams = {
   /**
    * The chain id for this instance of the Alpha Router.
    */
-  chainId: ChainId;
+  chainId: ChainIdWithChiliz;
   /**
    * The Web3 provider for getting on-chain data.
    */
@@ -431,7 +428,7 @@ export class AlphaRouter
     IRouter<AlphaRouterConfig>,
     ISwapToRatio<AlphaRouterConfig, SwapAndAddConfig>
 {
-  protected chainId: ChainId;
+  protected chainId: ChainIdWithChiliz;
   protected provider: BaseProvider;
   protected multicall2Provider: UniswapMulticallProvider;
   protected v3SubgraphProvider: IV3SubgraphProvider;
@@ -448,8 +445,7 @@ export class AlphaRouter
   protected mixedRouteGasModelFactory: IOnChainGasModelFactory;
   protected tokenValidatorProvider?: ITokenValidatorProvider;
   protected blockedTokenListProvider?: ITokenListProvider;
-  protected l2GasDataProvider?:
-    | IL2GasDataProvider<ArbitrumGasData>;
+  protected l2GasDataProvider?: IL2GasDataProvider<ArbitrumGasData>;
   protected simulator?: Simulator;
   protected v2Quoter: V2Quoter;
   protected v3Quoter: V3Quoter;
@@ -457,7 +453,7 @@ export class AlphaRouter
   protected routeCachingProvider?: IRouteCachingProvider;
   protected tokenPropertiesProvider: ITokenPropertiesProvider;
   protected portionProvider: IPortionProvider;
-  protected v2Supported?: ChainId[];
+  protected v2Supported?: ChainIdWithChiliz[];
 
   constructor({
     chainId,
@@ -1063,6 +1059,8 @@ export class AlphaRouter
       1,
       MetricLoggerUnit.Count
     );
+    log.error('Calling getPools_');
+    const chilizPools = await getPools_(6000, this.chainId, 2);
 
     // Get a block number to specify in all our calls. Ensures data we fetch from chain is
     // from the same block.
@@ -1115,8 +1113,8 @@ export class AlphaRouter
       mixedRouteGasModel: mixedRouteGasModel,
     } = await this.getGasModels(
       gasPriceWei,
-      amount.currency.wrapped,
       quoteToken,
+      chilizPools,
       providerConfig
     );
 
@@ -1224,6 +1222,7 @@ export class AlphaRouter
         v3GasModel,
         mixedRouteGasModel,
         gasPriceWei,
+        chilizPools,
         v2GasModel,
         swapConfig
       );
@@ -1243,6 +1242,7 @@ export class AlphaRouter
         v3GasModel,
         mixedRouteGasModel,
         gasPriceWei,
+        chilizPools,
         v2GasModel,
         swapConfig
       );
@@ -1420,7 +1420,6 @@ export class AlphaRouter
     );
 
     let methodParameters: MethodParameters | undefined;
-
     // If user provided recipient, deadline etc. we also generate the calldata required to execute
     // the swap and return it too.
     if (swapConfig) {
@@ -1510,6 +1509,7 @@ export class AlphaRouter
         // Quote will be in WETH even if quoteCurrency is ETH
         // So we init a new CurrencyAmount object here
         CurrencyAmount.fromRawAmount(quoteCurrency, quote.quotient.toString()),
+        chilizPools,
         providerConfig
       );
       metric.putMetric(
@@ -1533,6 +1533,7 @@ export class AlphaRouter
     v3GasModel: IGasModel<V3RouteWithValidQuote>,
     mixedRouteGasModel: IGasModel<MixedRouteWithValidQuote>,
     gasPriceWei: BigNumber,
+    chilizPools: V2SubgraphPool[],
     v2GasModel?: IGasModel<V2RouteWithValidQuote>,
     swapConfig?: SwapOptions
   ): Promise<BestSwapRoute | null> {
@@ -1589,6 +1590,7 @@ export class AlphaRouter
             percents,
             quoteToken,
             tradeType,
+            chilizPools,
             routingConfig,
             undefined,
             v3GasModel
@@ -1628,6 +1630,7 @@ export class AlphaRouter
             quoteToken,
             tradeType,
             routingConfig,
+            chilizPools,
             gasPriceWei
           )
           .then((result) => {
@@ -1662,6 +1665,7 @@ export class AlphaRouter
             percents,
             quoteToken,
             tradeType,
+            chilizPools,
             routingConfig,
             undefined,
             mixedRouteGasModel
@@ -1709,6 +1713,7 @@ export class AlphaRouter
     v3GasModel: IGasModel<V3RouteWithValidQuote>,
     mixedRouteGasModel: IGasModel<MixedRouteWithValidQuote>,
     gasPriceWei: BigNumber,
+    chilizPools: V2SubgraphPool[],
     v2GasModel?: IGasModel<V2RouteWithValidQuote>,
     swapConfig?: SwapOptions
   ): Promise<BestSwapRoute | null> {
@@ -1728,7 +1733,7 @@ export class AlphaRouter
       protocols.includes(Protocol.MIXED) ||
       (noProtocolsSpecified && v2SupportedInChain);
     const mixedProtocolAllowed =
-      [ChainId.MAINNET, ChainId.GOERLI].includes(this.chainId) &&
+      [ChainId.MAINNET, ChainId.GOERLI].includes(this.chainId as ChainId) &&
       tradeType === TradeType.EXACT_INPUT;
 
     const beforeGetCandidates = Date.now();
@@ -1778,6 +1783,7 @@ export class AlphaRouter
         routeType: tradeType,
         subgraphProvider: this.v2SubgraphProvider,
         routingConfig,
+        chilizPools,
         chainId: this.chainId,
       }).then((candidatePools) => {
         metric.putMetric(
@@ -1815,6 +1821,7 @@ export class AlphaRouter
               v3CandidatePools!,
               tradeType,
               routingConfig,
+              chilizPools,
               v3GasModel
             )
             .then((result) => {
@@ -1854,6 +1861,7 @@ export class AlphaRouter
               v2CandidatePools!,
               tradeType,
               routingConfig,
+              chilizPools,
               v2GasModel,
               gasPriceWei
             )
@@ -1897,6 +1905,7 @@ export class AlphaRouter
                 [v3CandidatePools!, v2CandidatePools!],
                 tradeType,
                 routingConfig,
+                chilizPools,
                 mixedRouteGasModel
               )
               .then((result) => {
@@ -1913,7 +1922,6 @@ export class AlphaRouter
     }
 
     const getQuotesResults = await Promise.all(quotePromises);
-
     const allRoutesWithValidQuotes: RouteWithValidQuote[] = [];
     const allCandidatePools: CandidatePoolsBySelectionCriteria[] = [];
     getQuotesResults.forEach((getQuoteResult) => {
@@ -2005,104 +2013,22 @@ export class AlphaRouter
 
   private async getGasModels(
     gasPriceWei: BigNumber,
-    amountToken: Token,
     quoteToken: Token,
+    chilizPools: V2SubgraphPool[],
     providerConfig?: GasModelProviderConfig
   ): Promise<GasModelType> {
     const beforeGasModel = Date.now();
-
-    const usdPoolPromise = getHighestLiquidityV3USDPool(
-      this.chainId,
-      this.v3PoolProvider,
-      providerConfig
-    );
-    const nativeCurrency = WRAPPED_NATIVE_CURRENCY[this.chainId];
-    const nativeAndQuoteTokenV3PoolPromise = !quoteToken.equals(nativeCurrency)
-      ? getHighestLiquidityV3NativePool(
-          quoteToken,
-          this.v3PoolProvider,
-          providerConfig
-        )
-      : Promise.resolve(null);
-    const nativeAndAmountTokenV3PoolPromise = !amountToken.equals(
-      nativeCurrency
-    )
-      ? getHighestLiquidityV3NativePool(
-          amountToken,
-          this.v3PoolProvider,
-          providerConfig
-        )
-      : Promise.resolve(null);
-
-    // If a specific gas token is specified in the provider config
-    // fetch the highest liq V3 pool with it and the native currency
-    const nativeAndSpecifiedGasTokenV3PoolPromise =
-      providerConfig?.gasToken &&
-      !providerConfig?.gasToken.equals(nativeCurrency)
-        ? getHighestLiquidityV3NativePool(
-            providerConfig?.gasToken,
-            this.v3PoolProvider,
-            providerConfig
-          )
-        : Promise.resolve(null);
-
-    const [
-      usdPool,
-      nativeAndQuoteTokenV3Pool,
-      nativeAndAmountTokenV3Pool,
-      nativeAndSpecifiedGasTokenV3Pool,
-    ] = await Promise.all([
-      usdPoolPromise,
-      nativeAndQuoteTokenV3PoolPromise,
-      nativeAndAmountTokenV3PoolPromise,
-      nativeAndSpecifiedGasTokenV3PoolPromise,
-    ]);
-
-    const pools: LiquidityCalculationPools = {
-      usdPool: usdPool,
-      nativeAndQuoteTokenV3Pool: nativeAndQuoteTokenV3Pool,
-      nativeAndAmountTokenV3Pool: nativeAndAmountTokenV3Pool,
-      nativeAndSpecifiedGasTokenV3Pool: nativeAndSpecifiedGasTokenV3Pool,
-    };
-
-    const v2GasModelPromise = this.v2Supported?.includes(this.chainId)
-      ? this.v2GasModelFactory.buildGasModel({
-          chainId: this.chainId,
-          gasPriceWei,
-          poolProvider: this.v2PoolProvider,
-          token: quoteToken,
-          l2GasDataProvider: this.l2GasDataProvider,
-          providerConfig: providerConfig,
-        }).catch(_ => undefined) // If v2 model throws uncaught exception, we return undefined v2 gas model, so there's a chance v3 route can go through
-      : Promise.resolve(undefined);
-
-    const v3GasModelPromise = this.v3GasModelFactory.buildGasModel({
-      chainId: this.chainId,
-      gasPriceWei,
-      pools,
-      amountToken,
-      quoteToken,
-      v2poolProvider: this.v2PoolProvider,
-      l2GasDataProvider: this.l2GasDataProvider,
-      providerConfig: providerConfig,
-    });
-
-    const mixedRouteGasModelPromise =
-      this.mixedRouteGasModelFactory.buildGasModel({
+    const v2GasModel = await this.v2GasModelFactory
+      .buildGasModel({
         chainId: this.chainId,
         gasPriceWei,
-        pools,
-        amountToken,
-        quoteToken,
-        v2poolProvider: this.v2PoolProvider,
+        poolProvider: this.v2PoolProvider,
+        token: quoteToken,
+        l2GasDataProvider: this.l2GasDataProvider,
         providerConfig: providerConfig,
-      });
-
-    const [v2GasModel, v3GasModel, mixedRouteGasModel] = await Promise.all([
-      v2GasModelPromise,
-      v3GasModelPromise,
-      mixedRouteGasModelPromise,
-    ]);
+        chilizPools,
+      })
+      .catch((_) => undefined); // If v2 model throws uncaught exception, we return undefined v2 gas model, so there's a chance v3 route can go through
 
     metric.putMetric(
       'GasModelCreation',
@@ -2112,8 +2038,6 @@ export class AlphaRouter
 
     return {
       v2GasModel: v2GasModel,
-      v3GasModel: v3GasModel,
-      mixedRouteGasModel: mixedRouteGasModel,
     } as GasModelType;
   }
 

@@ -6,7 +6,7 @@ import { Pool } from '@uniswap/v3-sdk';
 import JSBI from 'jsbi';
 import _ from 'lodash';
 
-import { WRAPPED_NATIVE_CURRENCY } from '../../../..';
+import { V2SubgraphPool, WRAPPED_NATIVE_CURRENCY } from '../../../..';
 import { log } from '../../../../util';
 import { CurrencyAmount } from '../../../../util/amounts';
 import { getV2NativePool } from '../../../../util/gas-factory-helpers';
@@ -58,10 +58,11 @@ export class MixedRouteHeuristicGasModelFactory extends IOnChainGasModelFactory 
     pools,
     quoteToken,
     v2poolProvider: V2poolProvider,
+    chilizPools,
     providerConfig,
-  }: BuildOnChainGasModelFactoryType): Promise<
-    IGasModel<MixedRouteWithValidQuote>
-  > {
+  }: BuildOnChainGasModelFactoryType & {
+    chilizPools: V2SubgraphPool[];
+  }): Promise<IGasModel<MixedRouteWithValidQuote>> {
     const nativeCurrency = WRAPPED_NATIVE_CURRENCY[chainId]!;
     const usdPool: Pool = pools.usdPool;
     const usdToken = usdPool.token0.equals(nativeCurrency)
@@ -75,6 +76,7 @@ export class MixedRouteHeuristicGasModelFactory extends IOnChainGasModelFactory 
       nativeV2Pool = await getV2NativePool(
         quoteToken,
         V2poolProvider,
+        chilizPools,
         providerConfig
       );
     }

@@ -2,6 +2,7 @@ import { ChainId, Token } from '@uniswap/sdk-core';
 import { Pair } from '@uniswap/v2-sdk';
 import _ from 'lodash';
 
+import { ChainIdWithChiliz, ExtendedChainId } from '../../util';
 import { WRAPPED_NATIVE_CURRENCY } from '../../util/chains';
 import { log } from '../../util/log';
 import {
@@ -19,7 +20,8 @@ import {
   DAI_MOONBEAM,
   DAI_OPTIMISM,
   ETH_BNB,
-  OP_OPTIMISM, USDB_BLAST,
+  OP_OPTIMISM,
+  USDB_BLAST,
   USDC_ARBITRUM,
   USDC_AVAX,
   USDC_BASE,
@@ -33,18 +35,21 @@ import {
   USDT_BNB,
   USDT_MAINNET,
   USDT_OPTIMISM,
+  WACM_CHILIZ,
+  WBAR_CHILIZ,
   WBTC_ARBITRUM,
   WBTC_MAINNET,
   WBTC_MOONBEAM,
   WBTC_OPTIMISM,
   WETH_POLYGON,
-  WMATIC_POLYGON
+  WMATIC_POLYGON,
+  WOG_CHILIZ,
 } from '../token-provider';
 
 import { IV2SubgraphProvider, V2SubgraphPool } from './subgraph-provider';
 
 type ChainTokenList = {
-  readonly [chainId in ChainId]: Token[];
+  readonly [chainId in ChainIdWithChiliz]: Token[];
 };
 
 const BASES_TO_CHECK_TRADES_AGAINST: ChainTokenList = {
@@ -110,6 +115,13 @@ const BASES_TO_CHECK_TRADES_AGAINST: ChainTokenList = {
   [ChainId.ZORA_SEPOLIA]: [WRAPPED_NATIVE_CURRENCY[ChainId.ZORA_SEPOLIA]!],
   [ChainId.ROOTSTOCK]: [WRAPPED_NATIVE_CURRENCY[ChainId.ROOTSTOCK]!],
   [ChainId.BLAST]: [WRAPPED_NATIVE_CURRENCY[ChainId.BLAST]!, USDB_BLAST],
+  // @warning: this is assumption about usdc, dai, usdt tokens for chiliz chain
+  [ExtendedChainId.CHILIZ]: [
+    WBAR_CHILIZ,
+    WACM_CHILIZ,
+    WOG_CHILIZ,
+    WRAPPED_NATIVE_CURRENCY[88888],
+  ],
 };
 
 /**
@@ -125,7 +137,7 @@ const BASES_TO_CHECK_TRADES_AGAINST: ChainTokenList = {
  * @class StaticV2SubgraphProvider
  */
 export class StaticV2SubgraphProvider implements IV2SubgraphProvider {
-  constructor(private chainId: ChainId) {}
+  constructor(private chainId: ChainIdWithChiliz) {}
 
   public async getPools(
     tokenIn?: Token,

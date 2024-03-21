@@ -1,11 +1,12 @@
 import { BigNumber } from '@ethersproject/bignumber';
-import { ChainId, Token } from '@uniswap/sdk-core';
+import { Token } from '@uniswap/sdk-core';
 import { Pair } from '@uniswap/v2-sdk';
 import retry, { Options as RetryOptions } from 'async-retry';
 import _ from 'lodash';
 
 import { IUniswapV2Pair__factory } from '../../types/v2/factories/IUniswapV2Pair__factory';
 import {
+  ChainIdWithChiliz,
   CurrencyAmount,
   ID_TO_NETWORK_NAME,
   metric,
@@ -17,6 +18,8 @@ import { IMulticallProvider, Result } from '../multicall-provider';
 import { ProviderConfig } from '../provider';
 import { ITokenPropertiesProvider } from '../token-properties-provider';
 import { TokenValidationResult } from '../token-validator-provider';
+
+import { V2SubgraphPool } from './subgraph-provider';
 
 type IReserves = {
   reserve0: BigNumber;
@@ -40,6 +43,7 @@ export interface IV2PoolProvider {
    */
   getPools(
     tokenPairs: [Token, Token][],
+    chilizPools: V2SubgraphPool[],
     providerConfig?: ProviderConfig
   ): Promise<V2PoolAccessor>;
 
@@ -52,7 +56,8 @@ export interface IV2PoolProvider {
    */
   getPoolAddress(
     tokenA: Token,
-    tokenB: Token
+    tokenB: Token,
+    pools: V2SubgraphPool[]
   ): { poolAddress: string; token0: Token; token1: Token };
 }
 
@@ -77,7 +82,7 @@ export class V2PoolProvider implements IV2PoolProvider {
    * @param retryOptions The retry options for each call to the multicall.
    */
   constructor(
-    protected chainId: ChainId,
+    protected chainId: ChainIdWithChiliz,
     protected multicall2Provider: IMulticallProvider,
     protected tokenPropertiesProvider: ITokenPropertiesProvider,
     protected retryOptions: V2PoolRetryOptions = {
@@ -89,18 +94,19 @@ export class V2PoolProvider implements IV2PoolProvider {
 
   public async getPools(
     tokenPairs: [Token, Token][],
+    chilizPools: V2SubgraphPool[], // used to pass to getPoolAddress
     providerConfig?: ProviderConfig
   ): Promise<V2PoolAccessor> {
     const poolAddressSet: Set<string> = new Set<string>();
     const sortedTokenPairs: Array<[Token, Token]> = [];
     const sortedPoolAddresses: string[] = [];
-
     for (const tokenPair of tokenPairs) {
       const [tokenA, tokenB] = tokenPair;
 
       const { poolAddress, token0, token1 } = this.getPoolAddress(
         tokenA,
-        tokenB
+        tokenB,
+        chilizPools
       );
 
       if (poolAddressSet.has(poolAddress)) {
@@ -233,7 +239,11 @@ export class V2PoolProvider implements IV2PoolProvider {
 
     return {
       getPool: (tokenA: Token, tokenB: Token): Pair | undefined => {
-        const { poolAddress } = this.getPoolAddress(tokenA, tokenB);
+        const { poolAddress } = this.getPoolAddress(
+          tokenA,
+          tokenB,
+          chilizPools
+        );
         return poolAddressToPool[poolAddress];
       },
       getPoolByAddress: (address: string): Pair | undefined =>
@@ -244,21 +254,48 @@ export class V2PoolProvider implements IV2PoolProvider {
 
   public getPoolAddress(
     tokenA: Token,
-    tokenB: Token
+    tokenB: Token,
+    pools: V2SubgraphPool[] = []
   ): { poolAddress: string; token0: Token; token1: Token } {
+    if (!pools) {
+      throw new Error('No pools found');
+    }
+
     const [token0, token1] = tokenA.sortsBefore(tokenB)
       ? [tokenA, tokenB]
       : [tokenB, tokenA];
 
     const cacheKey = `${this.chainId}/${token0.address}/${token1.address}`;
 
-    const cachedAddress = this.POOL_ADDRESS_CACHE[cacheKey];
+    // const cachedAddress = this.POOL_ADDRESS_CACHE[cacheKey];
 
-    if (cachedAddress) {
-      return { poolAddress: cachedAddress, token0, token1 };
+    // if (cachedAddress) {
+    //   return { poolAddress: cachedAddress, token0, token1 };
+    // }
+
+    // const poolAddress = Pair.getAddress(token0, token1);
+    let poolAddress = pools.find(
+      (pool) =>
+        (pool.token0.id.toLowerCase() === token0.address.toLowerCase() &&
+          pool.token1.id.toLowerCase() === token1.address.toLowerCase()) ||
+        (pool.token0.id.toLowerCase() === token1.address.toLowerCase() &&
+          pool.token1.id.toLowerCase() === token0.address.toLowerCase())
+    )?.id;
+
+    if (!poolAddress) {
+      poolAddress = pools.find(
+        (pool) =>
+          (pool.token1.id.toLowerCase() === token0.address.toLowerCase() &&
+            pool.token0.id.toLowerCase() === token1.address.toLowerCase()) ||
+          (pool.token1.id.toLowerCase() === token1.address.toLowerCase() &&
+            pool.token0.id.toLowerCase() === token0.address.toLowerCase())
+      )?.id;
+      if (!poolAddress) {
+        throw new Error(
+          `Could not find a pool for the token pair ${token0.address}/${token1.address}`
+        );
+      }
     }
-
-    const poolAddress = Pair.getAddress(token0, token1);
 
     this.POOL_ADDRESS_CACHE[cacheKey] = poolAddress;
 

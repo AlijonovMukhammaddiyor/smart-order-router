@@ -5,7 +5,12 @@ import { ChainId, Token } from '@uniswap/sdk-core';
 import _ from 'lodash';
 
 import { IERC20Metadata__factory } from '../types/v3/factories/IERC20Metadata__factory';
-import { log, WRAPPED_NATIVE_CURRENCY } from '../util';
+import {
+  ChainIdWithChiliz,
+  ExtendedChainId,
+  log,
+  WRAPPED_NATIVE_CURRENCY,
+} from '../util';
 
 import { IMulticallProvider, Result } from './multicall-provider';
 import { ProviderConfig } from './provider';
@@ -654,11 +659,34 @@ export const USDB_BLAST = new Token(
   18,
   'USDB',
   'USD Blast'
-)
+);
+
+// Chiliz Tokens
+export const WBAR_CHILIZ = new Token(
+  88888,
+  '0xb167645aF1bCc5098Bf9aeD803f51aC851Def98a',
+  18,
+  'WBAR',
+  'W FC Barcelona'
+);
+export const WACM_CHILIZ = new Token(
+  88888,
+  '0xaA6E14da5cd99f20552F23b23ceD9c026b5164F0',
+  18,
+  'WACM',
+  'W AC Milan'
+);
+export const WOG_CHILIZ = new Token(
+  88888,
+  '0x6ca2F657D21b52B7e92B33F7d7eda408E29cE83B',
+  18,
+  'WOG',
+  'W OG'
+);
 
 export class TokenProvider implements ITokenProvider {
   constructor(
-    private chainId: ChainId,
+    private chainId: ChainIdWithChiliz,
     protected multicall2Provider: IMulticallProvider
   ) {}
 
@@ -827,7 +855,7 @@ export class TokenProvider implements ITokenProvider {
   }
 }
 
-export const DAI_ON = (chainId: ChainId): Token => {
+export const DAI_ON = (chainId: ChainIdWithChiliz): Token => {
   switch (chainId) {
     case ChainId.MAINNET:
       return DAI_MAINNET;
@@ -861,6 +889,8 @@ export const DAI_ON = (chainId: ChainId): Token => {
       return DAI_BNB;
     case ChainId.AVALANCHE:
       return DAI_AVAX;
+    case ExtendedChainId.CHILIZ:
+      return WACM_CHILIZ; // @warning: this is assumption
     default:
       throw new Error(`Chain id: ${chainId} not supported`);
   }
@@ -887,7 +917,7 @@ export const USDT_ON = (chainId: ChainId): Token => {
   }
 };
 
-export const USDC_ON = (chainId: ChainId): Token => {
+export const USDC_ON = (chainId: ChainIdWithChiliz): Token => {
   switch (chainId) {
     case ChainId.MAINNET:
       return USDC_MAINNET;
@@ -923,11 +953,13 @@ export const USDC_ON = (chainId: ChainId): Token => {
       return USDC_BASE;
     case ChainId.BASE_GOERLI:
       return USDC_BASE_GOERLI;
+    case ExtendedChainId.CHILIZ:
+      return WBAR_CHILIZ; // @warning: this is assumption
     default:
       throw new Error(`Chain id: ${chainId} not supported`);
   }
 };
 
-export const WNATIVE_ON = (chainId: ChainId): Token => {
+export const WNATIVE_ON = (chainId: ChainIdWithChiliz): Token => {
   return WRAPPED_NATIVE_CURRENCY[chainId];
 };

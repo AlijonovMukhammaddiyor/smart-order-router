@@ -8,7 +8,7 @@ import {
   SwapRoute,
   SwapType,
 } from '../routers';
-import { BEACON_CHAIN_DEPOSIT_ADDRESS, log } from '../util';
+import { BEACON_CHAIN_DEPOSIT_ADDRESS, ChainIdWithChiliz, log } from '../util';
 import {
   calculateGasUsed,
   initSwapRouteFromExisting,
@@ -18,6 +18,7 @@ import { IPortionProvider } from './portion-provider';
 import { ProviderConfig } from './provider';
 import { SimulationStatus, Simulator } from './simulation-provider';
 import { IV2PoolProvider } from './v2/pool-provider';
+import { V2SubgraphPool } from './v2/subgraph-provider';
 import { IV3PoolProvider } from './v3/pool-provider';
 
 // We multiply eth estimate gas by this to add a buffer for gas limits
@@ -26,10 +27,12 @@ const DEFAULT_ESTIMATE_MULTIPLIER = 1.2;
 export class EthEstimateGasSimulator extends Simulator {
   v2PoolProvider: IV2PoolProvider;
   v3PoolProvider: IV3PoolProvider;
-  private overrideEstimateMultiplier: { [chainId in ChainId]?: number };
+  private overrideEstimateMultiplier: {
+    [chainId in ChainIdWithChiliz]?: number;
+  };
 
   constructor(
-    chainId: ChainId,
+    chainId: ChainIdWithChiliz,
     provider: JsonRpcProvider,
     v2PoolProvider: IV2PoolProvider,
     v3PoolProvider: IV3PoolProvider,
@@ -46,6 +49,7 @@ export class EthEstimateGasSimulator extends Simulator {
     fromAddress: string,
     swapOptions: SwapOptions,
     route: SwapRoute,
+    chilizPools: V2SubgraphPool[],
     providerConfig?: ProviderConfig
   ): Promise<SwapRoute> {
     const currencyIn = route.trade.inputAmount.currency;
@@ -112,7 +116,16 @@ export class EthEstimateGasSimulator extends Simulator {
       estimatedGasUsedQuoteToken,
       estimatedGasUsedGasToken,
       quoteGasAdjusted,
-    } = await calculateGasUsed(route.quote.currency.chainId, route, estimatedGasUsed, this.v2PoolProvider, this.v3PoolProvider, this.provider, providerConfig);
+    } = await calculateGasUsed(
+      route.quote.currency.chainId,
+      route,
+      estimatedGasUsed,
+      this.v2PoolProvider,
+      this.v3PoolProvider,
+      this.provider,
+      chilizPools,
+      providerConfig
+    );
     return {
       ...initSwapRouteFromExisting(
         route,
@@ -146,6 +159,7 @@ export class EthEstimateGasSimulator extends Simulator {
     fromAddress: string,
     swapOptions: SwapOptions,
     swapRoute: SwapRoute,
+    chilizPools: V2SubgraphPool[],
     _providerConfig?: GasModelProviderConfig
   ): Promise<SwapRoute> {
     const inputAmount = swapRoute.trade.inputAmount;
@@ -158,7 +172,13 @@ export class EthEstimateGasSimulator extends Simulator {
         this.provider
       ))
     ) {
-      return await this.ethEstimateGas(fromAddress, swapOptions, swapRoute, _providerConfig);
+      return await this.ethEstimateGas(
+        fromAddress,
+        swapOptions,
+        swapRoute,
+        chilizPools,
+        _providerConfig
+      );
     } else {
       log.info('Token not approved, skipping simulation');
       return {

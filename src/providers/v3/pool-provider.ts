@@ -1,11 +1,14 @@
 import { BigNumber } from '@ethersproject/bignumber';
-import { ChainId, Token } from '@uniswap/sdk-core';
+import { Token } from '@uniswap/sdk-core';
 import { computePoolAddress, FeeAmount, Pool } from '@uniswap/v3-sdk';
 import retry, { Options as RetryOptions } from 'async-retry';
 import _ from 'lodash';
 
 import { IUniswapV3PoolState__factory } from '../../types/v3/factories/IUniswapV3PoolState__factory';
-import { V3_CORE_FACTORY_ADDRESSES } from '../../util/addresses';
+import {
+  ChainIdWithChiliz,
+  V3_CORE_FACTORY_ADDRESSES,
+} from '../../util/addresses';
 import { log } from '../../util/log';
 import { poolToString } from '../../util/routes';
 import { IMulticallProvider, Result } from '../multicall-provider';
@@ -81,7 +84,7 @@ export class V3PoolProvider implements IV3PoolProvider {
    * @param retryOptions The retry options for each call to the multicall.
    */
   constructor(
-    protected chainId: ChainId,
+    protected chainId: ChainIdWithChiliz,
     protected multicall2Provider: IMulticallProvider,
     protected retryOptions: V3PoolRetryOptions = {
       retries: 2,

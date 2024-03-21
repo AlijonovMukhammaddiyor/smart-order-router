@@ -5,6 +5,7 @@ import { ChainId } from '@uniswap/sdk-core';
 import { TokenFeeDetector__factory } from '../types/other/factories/TokenFeeDetector__factory';
 import { TokenFeeDetector } from '../types/other/TokenFeeDetector';
 import {
+  ChainIdWithChiliz,
   log,
   metric,
   MetricLoggerUnit,
@@ -31,7 +32,7 @@ export type TokenFeeResult = {
 export type TokenFeeMap = Record<Address, TokenFeeResult>;
 
 // address at which the FeeDetector lens is deployed
-const FEE_DETECTOR_ADDRESS = (chainId: ChainId) => {
+const FEE_DETECTOR_ADDRESS = (chainId: ChainIdWithChiliz) => {
   switch (chainId) {
     case ChainId.MAINNET:
     default:
@@ -59,7 +60,7 @@ export class OnChainTokenFeeFetcher implements ITokenFeeFetcher {
   private readonly contract: TokenFeeDetector;
 
   constructor(
-    private chainId: ChainId,
+    private chainId: ChainIdWithChiliz,
     rpcProvider: BaseProvider,
     private tokenFeeAddress = FEE_DETECTOR_ADDRESS(chainId),
     private gasLimitPerCall = GAS_LIMIT_PER_VALIDATE,

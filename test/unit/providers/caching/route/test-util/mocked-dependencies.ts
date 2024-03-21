@@ -48,6 +48,7 @@ export function getV2RouteWithValidQuoteStub(
     quoteToken: DAI,
     tradeType: TradeType.EXACT_INPUT,
     v2PoolProvider: getMockedV2PoolProvider(),
+    chilizPools: [],
     ...overrides,
   });
 }
@@ -96,6 +97,7 @@ export function getMixedRouteWithValidQuoteStub(
     tradeType: TradeType.EXACT_INPUT,
     v3PoolProvider: getMockedV3PoolProvider(),
     v2PoolProvider: getMockedV2PoolProvider(),
+    chilizPools: [],
     ...overrides,
   });
 }
