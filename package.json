@@ -1,16 +1,16 @@
 {
-  "name": "@uniswap/smart-order-router",
+  "name": "@jalaswap/smart-order-router",
   "version": "3.26.0",
-  "description": "Uniswap Smart Order Router",
+  "description": "Jalaswap Smart Order Router",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Uniswap/smart-order-router.git"
+    "url": "https://github.com/AlijonovMukhammaddiyor/smart-order-router"
   },
   "license": "GPL",
-  "keywords": [],
+  "keywords": ["Chiliz", "uniswap", "smart-order-router"],
   "scripts": {
     "compile-v3-types": "npx typechain --target ethers-v5 --out-dir src/types/v3 './node_modules/@uniswap/?(v3-core|v3-periphery)/artifacts/contracts/**/*.json'",
     "compile-v2-types": "npx typechain --target ethers-v5 --out-dir src/types/v2 './node_modules/@uniswap/?(v2-core|v2-periphery)/build/*UniswapV2*.json'",
