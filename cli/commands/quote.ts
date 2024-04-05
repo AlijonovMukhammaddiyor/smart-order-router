@@ -52,6 +52,7 @@ export class Quote extends BaseCommand {
 
   async run() {
     const { flags } = this.parse(Quote);
+    // @warning: learn about these flags
     const {
       tokenIn: tokenInStr,
       tokenOut: tokenOutStr,
@@ -144,8 +145,9 @@ export class Quote extends BaseCommand {
         TradeType.EXACT_INPUT,
         recipient
           ? {
-              type: SwapType.UNIVERSAL_ROUTER,
-              deadlineOrPreviousBlockhash: 10000000000000,
+              // type: SwapType.UNIVERSAL_ROUTER,
+              type: SwapType.SWAP_ROUTER_02, // Because we do not have a universal router
+              deadline: 100,
               recipient,
               slippageTolerance: new Percent(5, 100),
               simulate: simulate ? { fromAddress: recipient } : undefined,

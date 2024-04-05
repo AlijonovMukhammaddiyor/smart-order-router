@@ -484,7 +484,7 @@ export class AlphaRouter
     this.provider = provider;
     this.multicall2Provider =
       multicall2Provider ??
-      new UniswapMulticallProvider(chainId, provider, 375_000);
+      new UniswapMulticallProvider(chainId, provider, 375_000); // @warning: reconsider this gas limit
     this.v3PoolProvider =
       v3PoolProvider ??
       new CachingV3PoolProvider(
