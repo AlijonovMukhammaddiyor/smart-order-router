@@ -1,3 +1,4 @@
+import { ChainIdWithChiliz } from './addresses';
 import {
   ChainId,
   CHAIN_TO_ADDRESSES_MAP,
@@ -104,6 +105,8 @@ export const UNISWAP_MULTICALL_ADDRESSES: AddressMap = {
 };
 
 export const SWAP_ROUTER_02_ADDRESSES = (chainId: number): string => {
+  // if it is chiliz, return the router
+  if (chainId === 88888) return '0x4EFbbAE904d7bea13D0b4216E73C1F1Ba5AC5796';
   const address = SWAP_ROUTER_02_ADDRESSES_HELPER(chainId);
   if (!address)
     throw new Error(
