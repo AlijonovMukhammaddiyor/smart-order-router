@@ -44,7 +44,7 @@ export async function getPools_(
     `,
   };
   const graphqlEndpoint =
-    'http://52.62.9.95:8000/subgraphs/name/chiliz-subgraph';
+    'http://13.124.51.53:8000/subgraphs/name/chiliz-subgraph';
 
   await retry(
     async () => {
@@ -76,6 +76,8 @@ export async function getPools_(
       // );
       // log.info('Wrote pools to v2pools.json');
 
+      // log.debug(`Got response from subgraph:`, poolsBuffer);
+
       if (status != 200) {
         log.error(`Unabled to get pools:`, { response });
 
@@ -83,7 +85,7 @@ export async function getPools_(
       }
 
       log.debug(
-        `Got pools from http://52.62.9.95:8000/subgraphs/name/chiliz-subgraph for ${chainId}`
+        `Got pools from http://13.124.51.53:8000/subgraphs/name/chiliz-subgraph for ${chainId}`
       );
 
       const pools = poolsBuffer.data.pairs as V2SubgraphPool[];

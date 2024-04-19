@@ -1,4 +1,3 @@
-import { ChainIdWithChiliz } from './addresses';
 import {
   ChainId,
   CHAIN_TO_ADDRESSES_MAP,
