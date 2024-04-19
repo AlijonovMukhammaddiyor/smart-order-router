@@ -48,6 +48,7 @@ export async function getPools_(
 
   await retry(
     async () => {
+      throw new Error('test');
       const timeout_ = new Timeout();
       console.log('timeout1: \n\n\n\n\n\n', timeout);
       const timerPromise = timeout_.set(timeout).then(() => {
