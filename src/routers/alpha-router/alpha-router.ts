@@ -1059,7 +1059,6 @@ export class AlphaRouter
       1,
       MetricLoggerUnit.Count
     );
-    log.error('Calling getPools_');
     const chilizPools = await getPools_(6000, this.chainId, 2);
 
     // Get a block number to specify in all our calls. Ensures data we fetch from chain is

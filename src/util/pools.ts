@@ -49,8 +49,9 @@ export async function getPools_(
   await retry(
     async () => {
       const timeout_ = new Timeout();
+      console.log('timeout1: \n\n\n\n\n\n', timeout);
       const timerPromise = timeout_.set(timeout).then(() => {
-        throw new Error(`Timed out getting pools from subgraph: ${timeout}`);
+        throw new Error(`3.Timed out getting pools from subgraph: ${timeout}`);
       });
 
       let response;

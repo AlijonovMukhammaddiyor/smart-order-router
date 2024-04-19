@@ -26,8 +26,6 @@ export class URISubgraphProvider<
 
   public async getPools(): Promise<TSubgraphPool[]> {
     log.info(`About to get subgraph pools from URI`, this.uri);
-
-    log.error('Calling getPools_ with timeout, chainId, and retries1');
     return (await getPools_(
       this.timeout,
       this.chainId,

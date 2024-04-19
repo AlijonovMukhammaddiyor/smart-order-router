@@ -175,10 +175,11 @@ export class V3SubgraphProvider implements IV3SubgraphProvider {
 
         /* eslint-disable no-useless-catch */
         try {
+          console.log('timeout2: \n\n\n\n\n\n', timeout);
           const getPoolsPromise = getPools();
           const timerPromise = timeout.set(this.timeout).then(() => {
             throw new Error(
-              `Timed out getting pools from subgraph: ${this.timeout}`
+              `2.Timed out getting pools from subgraph: ${this.timeout}`
             );
           });
           pools = await Promise.race([getPoolsPromise, timerPromise]);

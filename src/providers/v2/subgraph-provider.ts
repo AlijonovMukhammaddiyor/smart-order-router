@@ -153,10 +153,11 @@ export class V2SubgraphProvider implements IV2SubgraphProvider {
 
         /* eslint-disable no-useless-catch */
         try {
+          console.log('timeout3: \n\n\n\n\n\n', timeout);
           const getPoolsPromise = getPools();
           const timerPromise = timeout.set(this.timeout).then(() => {
             throw new Error(
-              `Timed out getting pools from subgraph: ${this.timeout}`
+              `1.Timed out getting pools from subgraph: ${this.timeout}`
             );
           });
           pools = await Promise.race([getPoolsPromise, timerPromise]);
