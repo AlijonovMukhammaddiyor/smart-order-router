@@ -1095,6 +1095,8 @@ export class AlphaRouter
         ).getTokenByAddress(routingConfig.gasToken)
       : undefined;
 
+    log.error(`gasToken: ${gasToken}`);
+
     const providerConfig: GasModelProviderConfig = {
       ...routingConfig,
       blockNumber,
@@ -2017,6 +2019,7 @@ export class AlphaRouter
     providerConfig?: GasModelProviderConfig
   ): Promise<GasModelType> {
     const beforeGasModel = Date.now();
+    log.error(quoteToken, `quoteToken`);
     const v2GasModel = await this.v2GasModelFactory
       .buildGasModel({
         chainId: this.chainId,

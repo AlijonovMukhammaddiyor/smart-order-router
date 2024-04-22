@@ -81,6 +81,7 @@ export class V2HeuristicGasModelFactory extends IV2GasModelFactory {
     );
 
     // Only fetch the native gasToken pool if specified by the config AND the gas token is not the native currency.
+    log.error('providerConfig?.gasToken', providerConfig?.gasToken);
     const nativeAndSpecifiedGasTokenPoolPromise =
       providerConfig?.gasToken &&
       !providerConfig?.gasToken.equals(WRAPPED_NATIVE_CURRENCY[chainId]!)
@@ -100,6 +101,7 @@ export class V2HeuristicGasModelFactory extends IV2GasModelFactory {
 
     let ethPool: Pair | null = null;
     if (!token.equals(WRAPPED_NATIVE_CURRENCY[chainId]!)) {
+      log.error({ token }, 'CALLING getEthPool');
       ethPool = await this.getEthPool(
         chainId,
         token,
@@ -246,6 +248,7 @@ export class V2HeuristicGasModelFactory extends IV2GasModelFactory {
     chilizPools: V2SubgraphPool[],
     providerConfig?: ProviderConfig
   ): Promise<Pair | null> {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const weth = WRAPPED_NATIVE_CURRENCY[chainId]!;
 
     const poolAccessor = await poolProvider.getPools(

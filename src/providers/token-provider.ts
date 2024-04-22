@@ -664,21 +664,21 @@ export const USDB_BLAST = new Token(
 // Chiliz Tokens
 export const WBAR_CHILIZ = new Token(
   88888,
-  '0xb167645aF1bCc5098Bf9aeD803f51aC851Def98a',
+  '0xbaAAEF59F4A6C11cC87FF75EAa7a386e753b2666',
   18,
   'WBAR',
   'W FC Barcelona'
 );
 export const WACM_CHILIZ = new Token(
   88888,
-  '0xaA6E14da5cd99f20552F23b23ceD9c026b5164F0',
+  '0x859DB9e2569bb87990482fC53E2F902E52585Ecb',
   18,
   'WACM',
   'W AC Milan'
 );
 export const WOG_CHILIZ = new Token(
   88888,
-  '0x6ca2F657D21b52B7e92B33F7d7eda408E29cE83B',
+  '0x07Eb6147263F2Fedb00002bAdaFc79ea769240f2',
   18,
   'WOG',
   'W OG'
