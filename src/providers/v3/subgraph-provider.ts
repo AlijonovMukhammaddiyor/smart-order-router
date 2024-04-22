@@ -175,7 +175,6 @@ export class V3SubgraphProvider implements IV3SubgraphProvider {
 
         /* eslint-disable no-useless-catch */
         try {
-          console.log('timeout2: \n\n\n\n\n\n', timeout);
           const getPoolsPromise = getPools();
           const timerPromise = timeout.set(this.timeout).then(() => {
             throw new Error(

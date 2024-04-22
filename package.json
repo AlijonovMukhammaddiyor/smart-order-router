@@ -1,5 +1,5 @@
 {
-  "name": "@kayen/smart-order-router",
+  "name": "@kayenorg/smart-order-router",
   "version": "0.0.1",
   "description": "Jalaswap Smart Order Router",
   "main": "build/main/index.js",

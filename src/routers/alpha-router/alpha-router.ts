@@ -1955,6 +1955,8 @@ export class AlphaRouter
       this.emitPoolSelectionMetrics(bestSwapRoute, allCandidatePools);
     }
 
+    log.error({ bestSwapRoute }, 'bestSwapRoute');
+
     return bestSwapRoute;
   }
 

@@ -638,6 +638,8 @@ export async function getBestSwapRouteBy(
     _.map(bestSwap, (routeWithValidQuote) => routeWithValidQuote.gasCostInToken)
   ).add(gasCostL1QuoteToken);
 
+  log.error({ estimatedGasUsedQuoteToken }, 'estimatedGasUsedQuoteToken');
+
   let estimatedGasUsedGasToken: CurrencyAmount | undefined;
   if (routingConfig.gasToken) {
     // sum the gas costs in the gas token across all routes
